@@ -180,7 +180,9 @@
         <option value="">物件を先に選択</option>
       </select>
       <label>担当者名<span class="req">必須</span></label>
-      <input type="text" id="cleaner-name" placeholder="山田 太郎" />
+      <select id="cleaner-name">
+        <option value="">読み込み中...</option>
+      </select>
     </div>
 
     <!-- 写真セクション（JS生成） -->
@@ -304,12 +306,31 @@ var TOTAL_PHOTOS = PHOTO_SECTIONS.reduce(function(s, sec) { return s + sec.photo
 var photos = {};
 
 window.onload = function() {
+  // 物件プルダウン初期化
   var sel = document.getElementById('property-name');
   Object.keys(PROPERTIES).forEach(function(name) {
     var o = document.createElement('option');
     o.value = name; o.textContent = name;
     sel.appendChild(o);
   });
+
+  // 清掃員リストをGASから取得
+  fetch(GAS_URL + '?action=cleaners')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var cs = document.getElementById('cleaner-name');
+      cs.innerHTML = '<option value="">選択してください</option>';
+      (data.cleaners || []).forEach(function(name) {
+        var o = document.createElement('option');
+        o.value = name; o.textContent = name;
+        cs.appendChild(o);
+      });
+    })
+    .catch(function() {
+      var cs = document.getElementById('cleaner-name');
+      cs.innerHTML = '<option value="">取得失敗 - 再読み込みしてください</option>';
+    });
+
   buildPhotoSections();
   updateUI();
 };
@@ -423,7 +444,7 @@ function updateUI() {
   }
 }
 
-document.getElementById('cleaner-name').addEventListener('input', updateUI);
+document.getElementById('cleaner-name').addEventListener('change', updateUI);
 document.getElementById('room-number').addEventListener('change', updateUI);
 
 async function submitReport() {
