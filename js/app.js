@@ -183,6 +183,7 @@ function closeModal() {
 }
 
 async function executeAction() {
+  var action = state.pendingAction;
   closeModal();
   setButtonsLoading(true);
 
@@ -192,7 +193,7 @@ async function executeAction() {
     var response = await fetch(GAS_API_URL, {
       method: 'POST',
       body: JSON.stringify({
-        action: state.pendingAction,
+        action: action,
         record_id: state.recordId,
         comment: comment
       })
