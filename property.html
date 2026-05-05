@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>物件登録</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1a73e8; --green: #34a853; --red: #ea4335;
+      --bg: #f0f2f5; --card: #ffffff; --border: #e0e0e0;
+      --text: #202124; --sub: #5f6368;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header { background: var(--blue); color: white; padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 20; }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header p  { font-size: 11px; opacity: 0.85; }
+    .content { padding: 12px 12px 40px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--bg); }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-bottom: 6px; margin-top: 14px; }
+    label:first-of-type { margin-top: 0; }
+    .req { color: var(--red); font-size: 10px; margin-left: 3px; }
+    .hint { font-size: 10px; font-weight: 400; color: var(--sub); margin-left: 4px; }
+    input[type="text"] { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; background: var(--bg); color: var(--text); }
+    input:focus { outline: none; border-color: var(--blue); background: white; }
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; background: var(--blue); color: white; margin-top: 16px; }
+    .btn:disabled { background: var(--border); color: var(--sub); cursor: not-allowed; }
+    .property-item { padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .property-item:last-child { margin-bottom: 0; }
+    .property-name { font-size: 15px; font-weight: 700; }
+    .property-meta { font-size: 12px; color: var(--sub); margin-top: 4px; }
+    .property-rooms { font-size: 12px; color: var(--blue); margin-top: 4px; }
+    .group-id { font-size: 11px; color: var(--sub); margin-top: 2px; word-break: break-all; }
+    .group-set   { color: var(--green); }
+    .group-unset { color: var(--red); }
+    .empty-msg { text-align: center; color: var(--sub); padding: 20px 0; font-size: 14px; }
+    #done-msg { display: none; background: #e6f4ea; border-radius: 8px; padding: 14px; text-align: center; font-weight: 700; color: var(--green); margin-top: 12px; }
+    #error-msg { display: none; background: #fce8e6; border-radius: 8px; padding: 14px; text-align: center; font-weight: 700; color: var(--red); margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="font-size:28px">🏠</div>
+  <div>
+    <h1>物件登録</h1>
+    <p>物件マスタ管理</p>
+  </div>
+</header>
+
+<div class="content">
+
+  <!-- 登録済み物件一覧 -->
+  <div class="card">
+    <div class="card-title">📋 登録済み物件</div>
+    <div id="property-list"><div class="empty-msg">読み込み中...</div></div>
+  </div>
+
+  <!-- 新規登録フォーム -->
+  <div class="card">
+    <div class="card-title">➕ 新規物件登録</div>
+
+    <label>物件名<span class="req">必須</span></label>
+    <input type="text" id="inp-name" placeholder="例：コーポ諏訪" />
+
+    <label>住所</label>
+    <input type="text" id="inp-address" placeholder="例：東京都新宿区諏訪1-1-1" />
+
+    <label>オーナー名</label>
+    <input type="text" id="inp-owner" placeholder="例：諏訪 一郎" />
+
+    <label>部屋番号<span class="req">必須</span><span class="hint">カンマ区切り</span></label>
+    <input type="text" id="inp-rooms" placeholder="例：101,102,103,201,202,203" />
+
+    <label>管理者LINEグループID<span class="hint">後から設定可</span></label>
+    <input type="text" id="inp-manager-id" placeholder="Cで始まる33文字" />
+
+    <label>オーナーLINEグループID<span class="hint">後から設定可</span></label>
+    <input type="text" id="inp-owner-id" placeholder="Cで始まる33文字" />
+
+    <label>備考</label>
+    <input type="text" id="inp-notes" placeholder="メモなど" />
+
+    <button class="btn" id="submit-btn" onclick="submitProperty()">登録する</button>
+    <div id="done-msg"></div>
+    <div id="error-msg"></div>
+  </div>
+
+</div>
+
+<script>
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
+
+window.onload = function() { loadProperties(); };
+
+function loadProperties() {
+  fetch(GAS_URL + '?action=properties')
+    .then(function(res) { return res.text(); })
+    .then(function(text) {
+      var data = JSON.parse(text);
+      var list = document.getElementById('property-list');
+      if (!data.properties || data.properties.length === 0) {
+        list.innerHTML = '<div class="empty-msg">登録済み物件はありません</div>';
+        return;
+      }
+      list.innerHTML = data.properties.map(function(p) {
+        var mgSet = p.manager_line_group_id ? true : false;
+        var owSet = p.owner_line_group_id   ? true : false;
+        return '<div class="property-item">' +
+          '<div class="property-name">🏠 ' + esc(p.property_name) + '</div>' +
+          (p.address ? '<div class="property-meta">📍 ' + esc(p.address) + '</div>' : '') +
+          (p.owner_name ? '<div class="property-meta">👤 ' + esc(p.owner_name) + '</div>' : '') +
+          '<div class="property-rooms">🚪 ' + esc(String(p.rooms || '')) + '</div>' +
+          '<div class="group-id ' + (mgSet ? 'group-set' : 'group-unset') + '">' +
+            '管理者LINE: ' + (mgSet ? '✅ 設定済み' : '❌ 未設定') +
+          '</div>' +
+          '<div class="group-id ' + (owSet ? 'group-set' : 'group-unset') + '">' +
+            'オーナーLINE: ' + (owSet ? '✅ 設定済み' : '❌ 未設定') +
+          '</div>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(function() {
+      document.getElementById('property-list').innerHTML = '<div class="empty-msg">⚠️ 読み込み失敗 — 再読み込みしてください</div>';
+    });
+}
+
+async function submitProperty() {
+  var name      = document.getElementById('inp-name').value.trim();
+  var address   = document.getElementById('inp-address').value.trim();
+  var owner     = document.getElementById('inp-owner').value.trim();
+  var rooms     = document.getElementById('inp-rooms').value.trim();
+  var managerId = document.getElementById('inp-manager-id').value.trim();
+  var ownerId   = document.getElementById('inp-owner-id').value.trim();
+  var notes     = document.getElementById('inp-notes').value.trim();
+
+  if (!name || !rooms) {
+    showError('物件名と部屋番号は必須です');
+    return;
+  }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '登録中...';
+  hideMessages();
+
+  try {
+    var res  = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action:                'add_property',
+        property_name:         name,
+        address:               address,
+        owner_name:            owner,
+        rooms:                 rooms,
+        manager_line_group_id: managerId,
+        owner_line_group_id:   ownerId,
+        notes:                 notes,
+      })
+    });
+    var data = JSON.parse(await res.text());
+    if (data.success) {
+      showDone('✅ ' + name + ' を登録しました');
+      clearForm();
+      loadProperties();
+    } else {
+      showError(data.error || '登録に失敗しました');
+    }
+  } catch (err) {
+    showError('送信エラー: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登録する';
+  }
+}
+
+function clearForm() {
+  ['inp-name','inp-address','inp-owner','inp-rooms','inp-manager-id','inp-owner-id','inp-notes']
+    .forEach(function(id) { document.getElementById(id).value = ''; });
+}
+
+function showDone(msg) {
+  var el = document.getElementById('done-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('error-msg').style.display = 'none';
+}
+function showError(msg) {
+  var el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('done-msg').style.display = 'none';
+}
+function hideMessages() {
+  document.getElementById('done-msg').style.display = 'none';
+  document.getElementById('error-msg').style.display = 'none';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];
+  });
+}
+</script>
+</body>
+</html>

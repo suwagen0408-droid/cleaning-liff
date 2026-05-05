@@ -215,10 +215,7 @@
 <script>
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
 
-var PROPERTIES = {
-  'コーポ諏訪': ['101','102','103','201','202','203'],
-  'ハイツ渋谷': ['101','102','201','202'],
-};
+var PROPERTIES = {};
 
 var PHOTO_SECTIONS = [
   {
@@ -306,13 +303,24 @@ var TOTAL_PHOTOS = PHOTO_SECTIONS.reduce(function(s, sec) { return s + sec.photo
 var photos = {};
 
 window.onload = function() {
-  // 物件プルダウン初期化
-  var sel = document.getElementById('property-name');
-  Object.keys(PROPERTIES).forEach(function(name) {
-    var o = document.createElement('option');
-    o.value = name; o.textContent = name;
-    sel.appendChild(o);
-  });
+  // 物件一覧をGASから取得
+  fetch(GAS_URL + '?action=properties')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var sel = document.getElementById('property-name');
+      sel.innerHTML = '<option value="">選択してください</option>';
+      (data.properties || []).forEach(function(p) {
+        PROPERTIES[p.property_name] = String(p.rooms || '')
+          .split(',').map(function(r) { return r.trim(); }).filter(Boolean);
+        var o = document.createElement('option');
+        o.value = p.property_name; o.textContent = p.property_name;
+        sel.appendChild(o);
+      });
+    })
+    .catch(function() {
+      document.getElementById('property-name').innerHTML =
+        '<option value="">取得失敗 - 再読み込みしてください</option>';
+    });
 
   // 清掃員リストをGASから取得
   fetch(GAS_URL + '?action=cleaners')
