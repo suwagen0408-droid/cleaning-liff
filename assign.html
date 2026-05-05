@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>清掃割り当て管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 18px 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; }
+    .header-date { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 3px; }
+
+    /* ---- Screens ---- */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ---- Loading ---- */
+    .loading-wrap {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 60vh; gap: 16px; color: #666;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Center cards (error / done) ---- */
+    .center-wrap { padding: 48px 20px; }
+    .center-card {
+      background: white; border-radius: 16px;
+      padding: 32px 24px; text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .center-icon { font-size: 48px; margin-bottom: 16px; }
+    .center-card h2 { font-size: 19px; margin-bottom: 8px; }
+    .center-card p { color: #666; font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin-bottom: 20px; }
+
+    /* ---- Main ---- */
+    main { padding: 16px 14px 0; max-width: 640px; margin: 0 auto; }
+
+    /* ---- Summary bar ---- */
+    .summary-bar {
+      display: flex; gap: 0;
+      background: white; border-radius: 14px;
+      overflow: hidden; margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .summary-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; padding: 14px 8px;
+      border-right: 1px solid #f0f0f0;
+    }
+    .summary-item:last-child { border-right: none; }
+    .summary-num { font-size: 26px; font-weight: 700; color: #1a73e8; line-height: 1; }
+    .summary-label { font-size: 11px; color: #888; margin-top: 4px; }
+
+    /* ---- Cards ---- */
+    .card {
+      background: white; border-radius: 14px;
+      padding: 18px 16px; margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .card-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: #1a202c; }
+
+    /* ---- Sync button ---- */
+    .btn-sync {
+      background: #e8f0fe; color: #1a73e8;
+      border: none; border-radius: 8px;
+      padding: 6px 13px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-sync:hover { background: #d2e3fc; }
+    .btn-sync:disabled { opacity: 0.5; cursor: default; }
+
+    /* ---- Status text ---- */
+    .sync-status { font-size: 12px; margin-bottom: 10px; min-height: 16px; }
+    .status-ok   { color: #34a853; }
+    .status-warn { color: #ea4335; }
+    .status-info { color: #5f6368; }
+
+    /* ---- Cleaner tags ---- */
+    .cleaner-tags { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; }
+    .cleaner-tag {
+      background: #e8f0fe; color: #1a73e8;
+      border-radius: 20px; padding: 5px 13px;
+      font-size: 13px; font-weight: 500;
+    }
+    .no-data { color: #bbb; font-size: 13px; }
+
+    /* ---- Room rows ---- */
+    .room-row {
+      display: flex; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #f4f4f4; gap: 10px;
+    }
+    .room-row:last-child { border-bottom: none; }
+    .room-row input[type=checkbox] {
+      width: 18px; height: 18px; accent-color: #1a73e8; flex-shrink: 0;
+    }
+    .room-info { flex: 1; }
+    .room-name { font-size: 13px; font-weight: 500; }
+    .room-sub  { font-size: 11px; color: #999; margin-top: 2px; }
+    .type-badge {
+      font-size: 11px; padding: 3px 8px;
+      border-radius: 10px; font-weight: 600; white-space: nowrap;
+    }
+    .type-checkout { background: #fce8e6; color: #c5221f; }
+    .type-stayover { background: #e6f4ea; color: #137333; }
+
+    /* ---- Assignment rows ---- */
+    .assign-row {
+      display: flex; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid #f4f4f4; gap: 8px;
+    }
+    .assign-row:last-child { border-bottom: none; }
+    .assign-room { flex: 1; min-width: 0; }
+    .assign-select {
+      border: 1px solid #ddd; border-radius: 8px;
+      padding: 6px 8px; font-size: 13px; color: #1a202c;
+      background: white; max-width: 130px; min-width: 100px;
+    }
+    .assign-select:focus { outline: none; border-color: #1a73e8; }
+
+    /* ---- Execute button ---- */
+    .execute-wrap {
+      padding: 12px 14px 0;
+      max-width: 640px; margin: 0 auto;
+    }
+    .btn-execute {
+      display: block; width: 100%;
+      padding: 17px; background: #1a73e8; color: white;
+      border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.03em; transition: background 0.15s;
+    }
+    .btn-execute:hover   { background: #1557b0; }
+    .btn-execute:disabled { background: #a8c4f5; cursor: default; }
+
+    /* ---- Generic buttons ---- */
+    .btn {
+      display: inline-block; padding: 11px 20px;
+      border-radius: 10px; font-size: 14px;
+      font-weight: 600; border: none; cursor: pointer;
+    }
+    .btn-secondary { background: #f1f3f4; color: #3c4043; }
+    .btn-primary   { background: #1a73e8; color: white; }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 1000; padding: 0;
+    }
+    .modal-content {
+      background: white; border-radius: 20px 20px 0 0;
+      padding: 28px 24px 36px;
+      width: 100%; max-width: 640px;
+    }
+    .modal-content h3 { font-size: 17px; margin-bottom: 12px; }
+    .modal-content p  {
+      font-size: 14px; color: #444; line-height: 1.7;
+      white-space: pre-wrap; margin-bottom: 24px;
+    }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions .btn { flex: 1; text-align: center; }
+
+    /* ---- Separator ---- */
+    .section-sep {
+      font-size: 11px; color: #bbb; text-transform: uppercase;
+      letter-spacing: 0.08em; margin: 4px 0 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧹 清掃割り当て管理</h1>
+  <div class="header-date" id="header-date">-</div>
+</header>
+
+<!-- Loading -->
+<div id="loading-screen" class="screen active">
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    <p>データを読み込んでいます...</p>
+  </div>
+</div>
+
+<!-- Error -->
+<div id="error-screen" class="screen">
+  <div class="center-wrap">
+    <div class="center-card">
+      <div class="center-icon">⚠️</div>
+      <h2>エラーが発生しました</h2>
+      <p id="error-message"></p>
+      <button class="btn btn-secondary" onclick="location.reload()">再試行</button>
+    </div>
+  </div>
+</div>
+
+<!-- Done -->
+<div id="done-screen" class="screen">
+  <div class="center-wrap">
+    <div class="center-card">
+      <div class="center-icon">✅</div>
+      <h2>割り当て完了</h2>
+      <p id="done-message"></p>
+      <button class="btn btn-secondary" onclick="location.reload()">更新</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main-screen" class="screen">
+  <main>
+
+    <!-- Summary -->
+    <div class="summary-bar">
+      <div class="summary-item">
+        <span class="summary-num" id="sum-rooms">-</span>
+        <span class="summary-label">清掃部屋数</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-num" id="sum-cleaners">-</span>
+        <span class="summary-label">出勤スタッフ</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-num" id="sum-per">-</span>
+        <span class="summary-label">1人あたり</span>
+      </div>
+    </div>
+
+    <!-- Staff card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">👥 本日の出勤スタッフ</h2>
+        <button class="btn-sync" id="sync-btn" onclick="syncShifts()">🔄 シフト同期</button>
+      </div>
+      <div class="sync-status status-info" id="sync-status"></div>
+      <div class="cleaner-tags" id="cleaners-list">
+        <span class="no-data">読み込み中...</span>
+      </div>
+    </div>
+
+    <!-- Checkout rooms card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🏠 本日の清掃対象部屋</h2>
+        <span class="sync-status status-info" id="room-count-badge" style="margin:0;"></span>
+      </div>
+      <div id="rooms-list">
+        <span class="no-data">読み込み中...</span>
+      </div>
+    </div>
+
+    <!-- Assignment card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">📋 清掃割り当て</h2>
+        <button class="btn-sync" onclick="regenerate()">🔄 自動割り当て</button>
+      </div>
+      <div id="assign-list">
+        <span class="no-data">-</span>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="execute-wrap">
+    <button class="btn-execute" id="execute-btn" onclick="showConfirmModal()">
+      ✅ 割り当て確定・LINE通知送信
+    </button>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirm-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <h3>割り当てを確定しますか？</h3>
+    <p id="modal-summary"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="executeAssign()">確定・送信</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GAS Web App URL（Cleaning Management と共通）
+// ============================================================
+var GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
+
+var state = {
+  date:      null,
+  cleaners:  [],
+  checkouts: [],
+  stayovers: [],
+  preview:   [],
+};
+
+// ============================================================
+// Init
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
+  var params = new URLSearchParams(window.location.search);
+  state.date = params.get('date') || todayJST();
+  document.getElementById('header-date').textContent = fmtDateLabel(state.date);
+  loadPrepareData();
+});
+
+function todayJST() {
+  var d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  return d.getFullYear() + '-'
+    + String(d.getMonth() + 1).padStart(2, '0') + '-'
+    + String(d.getDate()).padStart(2, '0');
+}
+
+function fmtDateLabel(s) {
+  try {
+    var p = s.split('-');
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var w = ['日','月','火','水','木','金','土'][d.getDay()];
+    return p[0] + '年' + (+p[1]) + '月' + (+p[2]) + '日(' + w + ')';
+  } catch (_) { return s; }
+}
+
+// ============================================================
+// Load prepare data
+// ============================================================
+async function loadPrepareData() {
+  showScreen('loading');
+  try {
+    var res  = await fetch(GAS_API_URL + '?action=prepare_assign&date=' + enc(state.date));
+    var data = await res.json();
+    if (!data.success) { showError(data.error || 'データ取得に失敗しました'); return; }
+
+    state.cleaners  = data.cleaners  || [];
+    state.checkouts = data.checkouts || [];
+    state.stayovers = data.stayovers || [];
+    state.preview   = data.preview   || [];
+
+    // Sync status display
+    var sr = data.sync_result || {};
+    var statusEl = document.getElementById('sync-status');
+    if (sr.synced) {
+      statusEl.textContent  = '✅ シフト同期済み（' + (sr.count || 0) + '件）';
+      statusEl.className    = 'sync-status status-ok';
+    } else if (sr.reason) {
+      statusEl.textContent  = 'ℹ️ ' + sr.reason;
+      statusEl.className    = 'sync-status status-info';
+    }
+
+    renderCleaners();
+    renderRooms();
+    renderAssignments();
+    updateSummary();
+    showScreen('main');
+  } catch (err) {
+    showError('通信エラー: ' + err.message);
+  }
+}
+
+// ============================================================
+// Sync shifts (manual button)
+// ============================================================
+async function syncShifts() {
+  var btn      = document.getElementById('sync-btn');
+  var statusEl = document.getElementById('sync-status');
+  btn.disabled   = true;
+  btn.textContent = '同期中...';
+  statusEl.textContent = '同期中...';
+  statusEl.className   = 'sync-status status-info';
+
+  try {
+    var res  = await fetch(GAS_API_URL + '?action=sync_shifts_from_server&date=' + enc(state.date));
+    var data = await res.json();
+
+    if (data.success) {
+      state.cleaners = data.cleaners || [];
+      renderCleaners();
+      regenerate();
+      statusEl.textContent = data.synced
+        ? '✅ 同期完了（' + state.cleaners.length + '名）'
+        : 'ℹ️ ' + (data.reason || 'シフトマスタを使用');
+      statusEl.className = data.synced ? 'sync-status status-ok' : 'sync-status status-info';
+    } else {
+      statusEl.textContent = '⚠️ ' + (data.reason || '同期失敗');
+      statusEl.className   = 'sync-status status-warn';
+    }
+  } catch (err) {
+    statusEl.textContent = '⚠️ ' + err.message;
+    statusEl.className   = 'sync-status status-warn';
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = '🔄 シフト同期';
+    updateSummary();
+  }
+}
+
+// ============================================================
+// Render helpers
+// ============================================================
+function renderCleaners() {
+  var el = document.getElementById('cleaners-list');
+  if (!state.cleaners.length) {
+    el.innerHTML = '<span class="no-data">本日のシフト登録なし</span>';
+    return;
+  }
+  el.innerHTML = state.cleaners.map(function (n) {
+    return '<span class="cleaner-tag">' + esc(n) + '</span>';
+  }).join('');
+}
+
+function renderRooms() {
+  var el       = document.getElementById('rooms-list');
+  var badge    = document.getElementById('room-count-badge');
+  var checkouts = state.checkouts;
+  var stayovers = state.stayovers;
+  var total     = checkouts.length + stayovers.length;
+
+  badge.textContent = total + '室';
+
+  if (total === 0) {
+    el.innerHTML = '<span class="no-data">清掃対象部屋なし</span>';
+    return;
+  }
+
+  var rows = '';
+
+  if (checkouts.length) {
+    rows += '<div class="section-sep">チェックアウト（' + checkouts.length + '室）</div>';
+    checkouts.forEach(function (r, i) {
+      rows += roomRow(r, i, false);
+    });
+  }
+
+  if (stayovers.length) {
+    rows += '<div class="section-sep" style="margin-top:12px;">連泊清掃（' + stayovers.length + '室）</div>';
+    stayovers.forEach(function (r, i) {
+      rows += roomRow(r, checkouts.length + i, true);
+    });
+  }
+
+  el.innerHTML = rows;
+}
+
+function roomRow(r, idx, isStayover) {
+  var badge = isStayover
+    ? '<span class="type-badge type-stayover">連泊</span>'
+    : '<span class="type-badge type-checkout">CO</span>';
+  return [
+    '<div class="room-row">',
+    '  <input type="checkbox" checked data-idx="' + idx + '" onchange="onRoomCheck(this)">',
+    '  <div class="room-info">',
+    '    <div class="room-name">' + esc(r.property_name) + ' &nbsp;<strong>' + esc(String(r.room_number)) + '号室</strong></div>',
+    r.note ? '    <div class="room-sub">' + esc(r.note) + '</div>' : '',
+    '  </div>',
+    badge,
+    '</div>',
+  ].join('');
+}
+
+function onRoomCheck(cb) {
+  var idx  = parseInt(cb.dataset.idx, 10);
+  var all  = state.checkouts.concat(state.stayovers);
+  all[idx]._excluded = !cb.checked;
+  // write back
+  if (idx < state.checkouts.length) {
+    state.checkouts[idx]._excluded = !cb.checked;
+  } else {
+    state.stayovers[idx - state.checkouts.length]._excluded = !cb.checked;
+  }
+  regenerate();
+}
+
+function renderAssignments() {
+  var el = document.getElementById('assign-list');
+  if (!state.preview.length) {
+    el.innerHTML = '<span class="no-data">部屋がありません</span>';
+    return;
+  }
+
+  el.innerHTML = state.preview.map(function (a, i) {
+    var opts = state.cleaners.length
+      ? state.cleaners.map(function (n) {
+          return '<option value="' + esc(n) + '"' + (n === a.cleaner_name ? ' selected' : '') + '>' + esc(n) + '</option>';
+        }).join('')
+      : '<option value="">担当者未定</option>';
+    var badge = a.type === '連泊清掃'
+      ? '<span class="type-badge type-stayover">連泊</span>'
+      : '<span class="type-badge type-checkout">CO</span>';
+    return [
+      '<div class="assign-row">',
+      '  <div class="assign-room">',
+      '    <div class="room-name">' + esc(a.property_name) + ' &nbsp;<strong>' + esc(String(a.room_number)) + '号室</strong></div>',
+      '    <div class="room-sub">' + badge + '</div>',
+      '  </div>',
+      '  <select class="assign-select" data-idx="' + i + '" onchange="onAssignChange(this)">',
+      opts,
+      '  </select>',
+      '</div>',
+    ].join('');
+  }).join('');
+}
+
+function onAssignChange(sel) {
+  state.preview[parseInt(sel.dataset.idx, 10)].cleaner_name = sel.value;
+}
+
+// ============================================================
+// Regenerate round-robin assignments
+// ============================================================
+function regenerate() {
+  var tasks = [];
+  state.checkouts.forEach(function (r) {
+    if (r._excluded) return;
+    tasks.push({ property_name: r.property_name, room_number: r.room_number, type: 'チェックアウト', note: r.note || '' });
+  });
+  state.stayovers.forEach(function (r) {
+    if (r._excluded) return;
+    tasks.push({ property_name: r.property_name, room_number: r.room_number, type: '連泊清掃', note: r.note || '' });
+  });
+
+  tasks.sort(function (a, b) {
+    if (a.property_name !== b.property_name) return a.property_name < b.property_name ? -1 : 1;
+    return String(a.room_number).localeCompare(String(b.room_number), 'ja', { numeric: true });
+  });
+
+  state.preview = tasks.map(function (t, i) {
+    return {
+      property_name: t.property_name,
+      room_number:   t.room_number,
+      type:          t.type,
+      note:          t.note,
+      cleaner_name:  state.cleaners.length ? state.cleaners[i % state.cleaners.length] : '',
+    };
+  });
+
+  renderAssignments();
+  updateSummary();
+}
+
+function updateSummary() {
+  var rooms    = state.preview.length;
+  var cleaners = state.cleaners.length;
+  document.getElementById('sum-rooms').textContent    = rooms;
+  document.getElementById('sum-cleaners').textContent = cleaners;
+  if (cleaners > 0) {
+    var mn = Math.floor(rooms / cleaners);
+    var mx = Math.ceil(rooms / cleaners);
+    document.getElementById('sum-per').textContent = mn === mx ? String(mx) : mn + '~' + mx;
+  } else {
+    document.getElementById('sum-per').textContent = '-';
+  }
+}
+
+// ============================================================
+// Execute
+// ============================================================
+function showConfirmModal() {
+  if (!state.preview.length) { alert('清掃部屋がありません'); return; }
+  var names = Array.from(new Set(state.preview.map(function (a) { return a.cleaner_name; }).filter(Boolean)));
+  document.getElementById('modal-summary').textContent =
+    '日付: ' + fmtDateLabel(state.date) + '\n' +
+    '清掃部屋数: ' + state.preview.length + '室\n' +
+    '通知スタッフ: ' + (names.length ? names.join('、') : 'なし') + '\n\n' +
+    '各スタッフのLINEへ清掃割り当てを通知します。よろしいですか？';
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+async function executeAssign() {
+  closeModal();
+  var btn = document.getElementById('execute-btn');
+  btn.disabled    = true;
+  btn.textContent = '送信中...';
+
+  try {
+    var res  = await fetch(GAS_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action:      'execute_assign',
+        date:        state.date,
+        assignments: state.preview,
+      }),
+    });
+    var data = JSON.parse(await res.text());
+
+    if (data.success) {
+      var msg = data.count + '室の割り当てを確定しました\n\n';
+      if (data.notified && data.notified.length) {
+        msg += '✅ LINE通知: ' + data.notified.join('、') + '\n';
+      }
+      if (data.skipped && data.skipped.length) {
+        msg += '\n⚠️ LINE未送信（ID未登録）:\n' + data.skipped.join('、');
+      }
+      document.getElementById('done-message').textContent = msg;
+      showScreen('done');
+    } else {
+      showError('実行エラー: ' + (data.error || '不明なエラー'));
+      btn.disabled    = false;
+      btn.textContent = '✅ 割り当て確定・LINE通知送信';
+    }
+  } catch (err) {
+    showError('送信失敗: ' + err.message);
+    btn.disabled    = false;
+    btn.textContent = '✅ 割り当て確定・LINE通知送信';
+  }
+}
+
+// ============================================================
+// UI helpers
+// ============================================================
+function showScreen(name) {
+  ['loading', 'error', 'done', 'main'].forEach(function (n) {
+    var el = document.getElementById(n + '-screen');
+    if (el) el.classList.toggle('active', n === name);
+  });
+}
+
+function showError(msg) {
+  document.getElementById('error-message').textContent = msg;
+  showScreen('error');
+}
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
+  });
+}
+
+function enc(s) { return encodeURIComponent(s); }
+</script>
+</body>
+</html>
