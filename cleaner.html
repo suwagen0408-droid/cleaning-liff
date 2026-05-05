@@ -9,8 +9,9 @@
     :root {
       --blue: #1a73e8;
       --green: #34a853;
+      --yellow: #f9ab00;
       --red: #ea4335;
-      --bg: #f5f7fa;
+      --bg: #f0f2f5;
       --card: #ffffff;
       --border: #e0e0e0;
       --text: #202124;
@@ -25,19 +26,57 @@
     header {
       background: var(--blue);
       color: white;
-      padding: 20px 16px;
-      padding-top: calc(20px + env(safe-area-inset-top));
+      padding: 14px 16px;
+      padding-top: calc(14px + env(safe-area-inset-top));
       display: flex;
       align-items: center;
       gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
-    header h1 { font-size: 20px; font-weight: 700; }
-    header p { font-size: 12px; opacity: 0.85; }
-    .content { padding: 12px 16px 100px; display: flex; flex-direction: column; gap: 12px; }
-    .card { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--bg); }
-    label { display: block; font-size: 12px; font-weight: 600; color: var(--sub); margin-bottom: 6px; margin-top: 14px; }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header p  { font-size: 11px; opacity: 0.85; }
+
+    .progress-wrap {
+      position: sticky;
+      top: 56px;
+      z-index: 19;
+      background: var(--bg);
+      padding: 6px 12px 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width 0.3s; }
+    .progress-label { font-size: 11px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+
+    .content { padding: 10px 12px 130px; display: flex; flex-direction: column; gap: 10px; }
+
+    .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card-title {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--bg);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .section-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 12px;
+      background: #e8f0fe; color: var(--blue);
+      transition: background 0.2s, color 0.2s;
+    }
+    .section-badge.done { background: #e6f4ea; color: var(--green); }
+
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--sub); margin-bottom: 6px; margin-top: 14px;
+    }
     label:first-of-type { margin-top: 0; }
+    .req { color: var(--red); font-size: 10px; margin-left: 3px; }
+
     select, input[type="text"] {
       width: 100%; padding: 12px; border: 1px solid var(--border);
       border-radius: 8px; font-size: 15px; font-family: inherit;
@@ -46,39 +85,28 @@
     }
     select:focus, input:focus { outline: none; border-color: var(--blue); background: white; }
 
-    /* 写真撮影エリア */
-    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .photo-item { display: flex; flex-direction: column; gap: 6px; }
-    .photo-label-text { font-size: 12px; font-weight: 600; color: var(--sub); }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .photo-item { display: flex; flex-direction: column; gap: 4px; }
+    .photo-label-text { font-size: 11px; font-weight: 600; color: var(--sub); line-height: 1.3; min-height: 28px; }
+
     .photo-btn {
-      aspect-ratio: 4/3; border: 2px dashed var(--border);
-      border-radius: 10px; background: var(--bg);
-      display: flex; flex-direction: column;
+      aspect-ratio: 4/3; border: 2px dashed var(--border); border-radius: 8px;
+      background: var(--bg); display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       cursor: pointer; overflow: hidden; position: relative;
     }
     .photo-btn.taken { border: 2px solid var(--green); }
     .photo-btn img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-btn .icon { font-size: 28px; }
-    .photo-btn .hint { font-size: 11px; color: var(--sub); margin-top: 4px; }
+    .photo-btn .icon { font-size: 20px; }
+    .photo-btn .hint { font-size: 10px; color: var(--sub); margin-top: 2px; }
     .photo-btn input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-      width: 100%; height: 100%;
-    }
-    .required-badge {
-      font-size: 10px; background: var(--red); color: white;
-      padding: 2px 6px; border-radius: 4px; margin-left: 4px;
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
 
-    /* 進捗バー */
-    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
-    .progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width 0.3s; }
-
-    /* 送信ボタン */
     .submit-area {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: white; padding: 16px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+      background: white; padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
       box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
     }
     .submit-btn {
@@ -90,7 +118,6 @@
     .submit-btn:disabled { background: var(--border); color: var(--sub); cursor: not-allowed; }
     .submit-btn:not(:disabled):active { transform: scale(0.98); }
 
-    /* 完了画面 */
     #done-screen {
       display: none; flex-direction: column; align-items: center;
       justify-content: center; min-height: 100vh;
@@ -105,12 +132,11 @@
       background: white; cursor: pointer; color: var(--text); margin-top: 8px;
     }
 
-    /* ローディング */
     #loading-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.93);
       flex-direction: column; align-items: center; justify-content: center;
-      gap: 16px; z-index: 100;
+      gap: 12px; z-index: 100;
     }
     .spinner {
       width: 48px; height: 48px; border: 4px solid var(--border);
@@ -118,100 +144,53 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading-overlay p { color: var(--sub); font-size: 14px; }
+    #loading-count { font-size: 22px; font-weight: 700; color: var(--blue); }
+    #loading-msg { color: var(--sub); font-size: 13px; }
   </style>
 </head>
 <body>
 
 <div id="main-screen">
   <header>
-    <div style="font-size:32px">🧹</div>
+    <div style="font-size:28px">🧹</div>
     <div>
       <h1>清掃完了報告</h1>
-      <p>全項目を入力して送信してください</p>
+      <p>ポルト 01・02タイプ</p>
     </div>
   </header>
 
-  <div class="content">
-    <!-- 進捗 -->
+  <div class="progress-wrap">
     <div class="progress-bar">
       <div class="progress-fill" id="progress-fill" style="width:0%"></div>
     </div>
+    <div class="progress-label" id="progress-label">0/49枚</div>
+  </div>
+
+  <div class="content">
 
     <!-- 基本情報 -->
     <div class="card">
       <div class="card-title">📋 基本情報</div>
-      <label>物件名 <span class="required-badge">必須</span></label>
+      <label>物件名<span class="req">必須</span></label>
       <select id="property-name" onchange="onPropertyChange()">
         <option value="">選択してください</option>
       </select>
-      <label>部屋番号 <span class="required-badge">必須</span></label>
+      <label>部屋番号<span class="req">必須</span></label>
       <select id="room-number" disabled>
         <option value="">物件を先に選択</option>
       </select>
-      <label>担当者名 <span class="required-badge">必須</span></label>
+      <label>担当者名<span class="req">必須</span></label>
       <input type="text" id="cleaner-name" placeholder="山田 太郎" />
     </div>
 
-    <!-- 写真撮影 -->
-    <div class="card">
-      <div class="card-title">📸 清掃写真</div>
-      <div class="photo-grid">
-        <div class="photo-item">
-          <div class="photo-label-text">清掃前 <span class="required-badge">必須</span></div>
-          <div class="photo-btn" id="btn-before">
-            <div class="icon">📷</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'before')" />
-          </div>
-        </div>
-        <div class="photo-item">
-          <div class="photo-label-text">清掃後 <span class="required-badge">必須</span></div>
-          <div class="photo-btn" id="btn-after">
-            <div class="icon">📷</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'after')" />
-          </div>
-        </div>
-        <div class="photo-item">
-          <div class="photo-label-text">玄関</div>
-          <div class="photo-btn" id="btn-entrance">
-            <div class="icon">🚪</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'entrance')" />
-          </div>
-        </div>
-        <div class="photo-item">
-          <div class="photo-label-text">キッチン</div>
-          <div class="photo-btn" id="btn-kitchen">
-            <div class="icon">🍳</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'kitchen')" />
-          </div>
-        </div>
-        <div class="photo-item">
-          <div class="photo-label-text">浴室</div>
-          <div class="photo-btn" id="btn-bathroom">
-            <div class="icon">🛁</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'bathroom')" />
-          </div>
-        </div>
-        <div class="photo-item">
-          <div class="photo-label-text">トイレ</div>
-          <div class="photo-btn" id="btn-toilet">
-            <div class="icon">🚽</div>
-            <div class="hint">タップして撮影</div>
-            <input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,'toilet')" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 写真セクション（JS生成） -->
+    <div id="photo-sections"></div>
+
   </div>
 
   <div class="submit-area">
     <button class="submit-btn" id="submit-btn" disabled onclick="submitReport()">
-      必須項目を入力してください
+      基本情報を入力してください
     </button>
   </div>
 </div>
@@ -227,143 +206,260 @@
 <!-- ローディング -->
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <p>送信中... しばらくお待ちください</p>
+  <div id="loading-count"></div>
+  <p id="loading-msg">送信中... しばらくお待ちください</p>
 </div>
 
 <script>
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
 
-// 物件マスタ（スプレッドシートから手動同期、または自動取得）
 var PROPERTIES = {
-  'コーポ諏訪':  ['101','102','103','201','202','203'],
-  'ハイツ渋谷':  ['101','102','201','202'],
+  'コーポ諏訪': ['101','102','103','201','202','203'],
+  'ハイツ渋谷': ['101','102','201','202'],
 };
 
+var PHOTO_SECTIONS = [
+  {
+    id: 'kitchen', title: '🍳 キッチン',
+    photos: [
+      { key: 'kitchen_appliances', label: '冷蔵庫・電子レンジ・ケトル全体' },
+      { key: 'microwave_in_1',     label: '電子レンジ内部①' },
+      { key: 'microwave_in_2',     label: '電子レンジ内部②' },
+      { key: 'fridge_in_1',        label: '冷蔵庫内部①' },
+      { key: 'fridge_in_2',        label: '冷蔵庫内部②' },
+      { key: 'fridge_in_3',        label: '冷蔵庫内部③' },
+      { key: 'kettle_in_1',        label: 'ケトル内部①' },
+      { key: 'kettle_in_2',        label: 'ケトル内部②' },
+      { key: 'kitchen_trash_out',  label: 'ゴミ箱の外' },
+      { key: 'kitchen_trash_in',   label: 'ゴミ箱の中' },
+      { key: 'kitchen_overall',    label: 'キッチン全体' },
+      { key: 'kitchen_drain',      label: 'キッチン排水口の中' },
+      { key: 'kitchen_faucet',     label: 'キッチン蛇口' },
+      { key: 'kitchen_stove',      label: 'キッチンガスコンロ' },
+      { key: 'kitchen_cabinet_1',  label: 'キッチン下収納①' },
+      { key: 'kitchen_cabinet_2',  label: 'キッチン下収納②' },
+    ]
+  },
+  {
+    id: 'living', title: '🛋️ リビング',
+    photos: [
+      { key: 'closet',        label: 'クローゼット' },
+      { key: 'living_trash',  label: 'リビングゴミ箱' },
+      { key: 'tv_top',        label: 'テレビ上から' },
+      { key: 'tv_front',      label: 'テレビ正面から' },
+      { key: 'tv_stand',      label: 'テレビ台' },
+      { key: 'glass_table',   label: 'ガラス机' },
+      { key: 'balcony',       label: 'ベランダ' },
+      { key: 'curtain',       label: '窓カーテン全開' },
+      { key: 'small_curtain', label: '小窓カーテン全開' },
+      { key: 'bed',           label: 'ベッド' },
+      { key: 'under_bed',     label: 'ベッド下' },
+      { key: 'dining_table',  label: 'ダイニングテーブル' },
+      { key: 'under_dining',  label: 'ダイニングテーブル下' },
+    ]
+  },
+  {
+    id: 'washroom', title: '🪥 洗面所',
+    photos: [
+      { key: 'washroom_overall',    label: '洗面所全体' },
+      { key: 'washroom_drain',      label: '洗面所の排水口の中' },
+      { key: 'washing_machine_out', label: '洗濯機外' },
+      { key: 'washing_machine_in',  label: '洗濯機内・ほこりネット' },
+    ]
+  },
+  {
+    id: 'bathroom', title: '🛁 浴室',
+    photos: [
+      { key: 'bath_overall', label: '浴室全体' },
+      { key: 'bath_floor',   label: '浴室ゆかのみ' },
+      { key: 'bath_tub',     label: '浴室浴槽のみ' },
+      { key: 'bath_drain',   label: '浴室の排水口の中' },
+      { key: 'shampoo',      label: 'シャンプー類' },
+      { key: 'bath_faucet',  label: '蛇口' },
+    ]
+  },
+  {
+    id: 'toilet', title: '🚽 トイレ',
+    photos: [
+      { key: 'toilet_overall', label: 'トイレ全体' },
+      { key: 'toilet_bowl_1',  label: 'トイレ便器①' },
+      { key: 'toilet_bowl_2',  label: 'トイレ便器②' },
+      { key: 'toilet_bowl_3',  label: 'トイレ便器③' },
+      { key: 'toilet_trash',   label: 'トイレゴミ箱中' },
+      { key: 'toilet_shelf',   label: 'トイレ上の棚' },
+    ]
+  },
+  {
+    id: 'entrance', title: '🚪 廊下・入り口',
+    photos: [
+      { key: 'hallway',       label: '廊下全体' },
+      { key: 'entrance_item', label: '入り口横の置物' },
+      { key: 'shoe_box',      label: '靴箱内' },
+      { key: 'entrance_door', label: '入り口' },
+    ]
+  },
+];
+
+var TOTAL_PHOTOS = PHOTO_SECTIONS.reduce(function(s, sec) { return s + sec.photos.length; }, 0);
 var photos = {};
 
-// 物件プルダウンを初期化
 window.onload = function() {
   var sel = document.getElementById('property-name');
   Object.keys(PROPERTIES).forEach(function(name) {
-    var opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
+    var o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    sel.appendChild(o);
   });
+  buildPhotoSections();
+  updateUI();
 };
+
+function buildPhotoSections() {
+  var container = document.getElementById('photo-sections');
+  container.innerHTML = PHOTO_SECTIONS.map(function(sec) {
+    var grid = sec.photos.map(function(p) {
+      return '<div class="photo-item">' +
+        '<div class="photo-label-text">' + p.label + '</div>' +
+        '<div class="photo-btn" id="btn-' + p.key + '">' +
+          '<div class="icon">📷</div>' +
+          '<div class="hint">タップ</div>' +
+          '<input type="file" accept="image/*" capture="environment"' +
+          ' onchange="onPhotoSelect(this,\'' + p.key + '\',\'' + escJs(p.label) + '\')" />' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    return '<div class="card">' +
+      '<div class="card-title">' + sec.title +
+        '<span class="section-badge" id="badge-' + sec.id + '">0/' + sec.photos.length + '枚</span>' +
+      '</div>' +
+      '<div class="photo-grid">' + grid + '</div>' +
+    '</div>';
+  }).join('');
+}
 
 function onPropertyChange() {
   var prop = document.getElementById('property-name').value;
-  var roomSel = document.getElementById('room-number');
-  roomSel.innerHTML = '';
+  var rs   = document.getElementById('room-number');
+  rs.innerHTML = '';
   if (!prop) {
-    roomSel.innerHTML = '<option value="">物件を先に選択</option>';
-    roomSel.disabled = true;
+    rs.innerHTML = '<option value="">物件を先に選択</option>';
+    rs.disabled = true;
   } else {
-    var rooms = PROPERTIES[prop] || [];
-    rooms.forEach(function(r) {
-      var opt = document.createElement('option');
-      opt.value = r;
-      opt.textContent = r + '号室';
-      roomSel.appendChild(opt);
+    (PROPERTIES[prop] || []).forEach(function(r) {
+      var o = document.createElement('option');
+      o.value = r; o.textContent = r + '号室';
+      rs.appendChild(o);
     });
-    roomSel.disabled = false;
+    rs.disabled = false;
   }
-  updateSubmitButton();
+  updateUI();
 }
 
-function onPhotoSelect(input, key) {
+function onPhotoSelect(input, key, label) {
   var file = input.files[0];
   if (!file) return;
-
-  // リサイズして保存
-  resizeImage(file, 1200, function(dataUrl) {
-    photos[key] = { label: getLabelName(key), dataUrl: dataUrl };
+  resizeImage(file, 800, function(dataUrl) {
+    photos[key] = { label: label, dataUrl: dataUrl };
     var btn = document.getElementById('btn-' + key);
     btn.classList.add('taken');
-    btn.innerHTML = '<img src="' + dataUrl + '" alt="' + key + '">' +
-      '<input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,\'' + key + '\')" />';
-    updateSubmitButton();
+    btn.innerHTML = '<img src="' + dataUrl + '" alt="' + escHtml(label) + '">' +
+      '<input type="file" accept="image/*" capture="environment"' +
+      ' onchange="onPhotoSelect(this,\'' + key + '\',\'' + escJs(label) + '\')" />';
+    updateSectionBadge(key);
+    updateUI();
   });
 }
 
-function getLabelName(key) {
-  var map = { before:'清掃前', after:'清掃後', entrance:'玄関', kitchen:'キッチン', bathroom:'浴室', toilet:'トイレ' };
-  return map[key] || key;
+function updateSectionBadge(key) {
+  PHOTO_SECTIONS.forEach(function(sec) {
+    if (!sec.photos.some(function(p) { return p.key === key; })) return;
+    var count = sec.photos.filter(function(p) { return !!photos[p.key]; }).length;
+    var el = document.getElementById('badge-' + sec.id);
+    if (!el) return;
+    el.textContent = count + '/' + sec.photos.length + '枚';
+    el.className   = 'section-badge' + (count === sec.photos.length ? ' done' : '');
+  });
 }
 
-function resizeImage(file, maxSize, callback) {
+function resizeImage(file, maxPx, callback) {
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
+      var ratio  = Math.min(maxPx / img.width, maxPx / img.height, 1);
       var canvas = document.createElement('canvas');
-      var ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
+      canvas.width  = Math.round(img.width  * ratio);
+      canvas.height = Math.round(img.height * ratio);
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      callback(canvas.toDataURL('image/jpeg', 0.8));
+      callback(canvas.toDataURL('image/jpeg', 0.75));
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function updateSubmitButton() {
+function updateUI() {
   var prop    = document.getElementById('property-name').value;
   var room    = document.getElementById('room-number').value;
   var cleaner = document.getElementById('cleaner-name').value.trim();
-  var hasBefore = !!photos['before'];
-  var hasAfter  = !!photos['after'];
+  var taken   = Object.keys(photos).length;
 
-  var total = (prop?1:0) + (room?1:0) + (cleaner?1:0) + (hasBefore?1:0) + (hasAfter?1:0);
-  var pct = Math.round(total / 5 * 100);
+  document.getElementById('progress-label').textContent = taken + '/' + TOTAL_PHOTOS + '枚';
+  var pct = Math.round((prop?1:0) * 10 + (room?1:0) * 10 + (cleaner?1:0) * 10 + (taken / TOTAL_PHOTOS) * 70);
   document.getElementById('progress-fill').style.width = pct + '%';
 
-  var btn = document.getElementById('submit-btn');
-  var ready = prop && room && cleaner && hasBefore && hasAfter;
+  var btn   = document.getElementById('submit-btn');
+  var ready = prop && room && cleaner;
   btn.disabled = !ready;
-  btn.textContent = ready ? '✅ 清掃完了を報告する' : '必須項目（清掃前後の写真）を入力してください';
-  btn.style.background = ready ? '#1a73e8' : '';
+  if (!ready) {
+    btn.textContent     = '基本情報を入力してください';
+    btn.style.background = '';
+  } else if (taken === 0) {
+    btn.textContent     = '⚠️ 写真なしで報告する';
+    btn.style.background = '#f9ab00';
+  } else {
+    btn.textContent     = '✅ ' + taken + '枚の写真で報告する';
+    btn.style.background = '#1a73e8';
+  }
 }
 
-document.getElementById('cleaner-name').addEventListener('input', updateSubmitButton);
-document.getElementById('room-number').addEventListener('change', updateSubmitButton);
+document.getElementById('cleaner-name').addEventListener('input', updateUI);
+document.getElementById('room-number').addEventListener('change', updateUI);
 
 async function submitReport() {
   var prop    = document.getElementById('property-name').value;
   var room    = document.getElementById('room-number').value;
   var cleaner = document.getElementById('cleaner-name').value.trim();
+  var list    = Object.values(photos);
 
-  document.getElementById('loading-overlay').style.display = 'flex';
-
-  var photoList = Object.values(photos).map(function(p) {
-    return { label: p.label, dataUrl: p.dataUrl };
-  });
+  var overlay = document.getElementById('loading-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('loading-count').textContent = list.length + '枚';
+  document.getElementById('loading-msg').textContent   = '送信中... しばらくお待ちください';
 
   try {
-    var res = await fetch(GAS_URL, {
+    var res  = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'cleaning_complete',
+        action:        'cleaning_complete',
         property_name: prop,
-        room_number: room,
-        cleaner_name: cleaner,
-        timestamp: new Date().toLocaleString('ja-JP'),
-        photos: photoList
+        room_number:   room,
+        cleaner_name:  cleaner,
+        timestamp:     new Date().toLocaleString('ja-JP'),
+        photos:        list,
       })
     });
     var data = await res.json();
-    document.getElementById('loading-overlay').style.display = 'none';
+    overlay.style.display = 'none';
     if (data.success) {
       document.getElementById('main-screen').style.display = 'none';
       document.getElementById('done-screen').style.display = 'flex';
     } else {
-      alert('送信エラー: ' + (data.error || '不明'));
+      alert('送信エラー: ' + (data.error || '不明なエラー'));
     }
   } catch(err) {
-    document.getElementById('loading-overlay').style.display = 'none';
+    overlay.style.display = 'none';
     alert('送信に失敗しました。電波状況を確認して再試行してください。\n' + err.message);
   }
 }
@@ -371,19 +467,21 @@ async function submitReport() {
 function resetForm() {
   photos = {};
   document.getElementById('property-name').value = '';
-  document.getElementById('room-number').innerHTML = '<option value="">物件を先に選択</option>';
-  document.getElementById('room-number').disabled = true;
+  onPropertyChange();
   document.getElementById('cleaner-name').value = '';
-  ['before','after','entrance','kitchen','bathroom','toilet'].forEach(function(k) {
-    var btn = document.getElementById('btn-' + k);
-    var icons = { before:'📷', after:'📷', entrance:'🚪', kitchen:'🍳', bathroom:'🛁', toilet:'🚽' };
-    btn.className = 'photo-btn';
-    btn.innerHTML = '<div class="icon">' + icons[k] + '</div><div class="hint">タップして撮影</div>' +
-      '<input type="file" accept="image/*" capture="environment" onchange="onPhotoSelect(this,\'' + k + '\')" />';
-  });
+  buildPhotoSections();
   document.getElementById('main-screen').style.display = 'block';
   document.getElementById('done-screen').style.display = 'none';
-  updateSubmitButton();
+  updateUI();
+}
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c];
+  });
+}
+function escJs(s) {
+  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 }
 </script>
 </body>
