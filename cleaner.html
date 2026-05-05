@@ -440,7 +440,6 @@ async function submitReport() {
   try {
     var res  = await fetch(GAS_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action:        'cleaning_complete',
         property_name: prop,
@@ -450,7 +449,8 @@ async function submitReport() {
         photos:        list,
       })
     });
-    var data = await res.json();
+    var text = await res.text();
+    var data = JSON.parse(text);
     overlay.style.display = 'none';
     if (data.success) {
       document.getElementById('main-screen').style.display = 'none';

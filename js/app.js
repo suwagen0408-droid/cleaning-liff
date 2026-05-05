@@ -191,7 +191,6 @@ async function executeAction() {
   try {
     var response = await fetch(GAS_API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: state.pendingAction,
         record_id: state.recordId,
@@ -199,7 +198,7 @@ async function executeAction() {
       })
     });
 
-    var data = await response.json();
+    var data = JSON.parse(await response.text());
 
     if (data.success) {
       showDone(
