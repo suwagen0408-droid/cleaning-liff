@@ -202,20 +202,21 @@ async function executeAction() {
     var data = JSON.parse(await response.text());
 
     if (data.success) {
+      disableActions(action === 'approve' ? '承認済み' : '差し戻し済み');
       showDone(
-        state.pendingAction === 'approve' ? '✅' : '🔄',
-        state.pendingAction === 'approve' ? '承認完了' : '差し戻し完了',
-        state.pendingAction === 'approve'
+        action === 'approve' ? '✅' : '🔄',
+        action === 'approve' ? '承認完了' : '差し戻し完了',
+        action === 'approve'
           ? 'オーナーへ清掃完了報告を送信しました。'
           : '清掃員へ再清掃依頼を送信しました。'
       );
     } else {
+      setButtonsLoading(false);
       showError('処理に失敗しました。\n' + (data.error || '不明なエラー'));
     }
   } catch (err) {
-    showError('送信に失敗しました。\n' + err.message);
-  } finally {
     setButtonsLoading(false);
+    showError('送信に失敗しました。\n' + err.message);
   }
 }
 
