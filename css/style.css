@@ -1,0 +1,551 @@
+/* ============================================================
+   style.css - LIFFミニアプリ スタイル
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-primary: #1a73e8;
+  --color-approve: #34a853;
+  --color-reject: #ea4335;
+  --color-warning: #fbbc04;
+  --color-bg: #f5f7fa;
+  --color-card: #ffffff;
+  --color-text: #202124;
+  --color-text-secondary: #5f6368;
+  --color-border: #e0e0e0;
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   スクリーン切り替え
+   ============================================================ */
+.screen {
+  display: none;
+  min-height: 100vh;
+}
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ローディング */
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* エラー画面 */
+.error-content, .done-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.error-icon, .done-icon {
+  font-size: 64px;
+}
+
+.error-content h2, .done-content h2 {
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.error-content p, .done-content p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   メイン画面レイアウト
+   ============================================================ */
+#main-screen {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#main-screen.active {
+  display: flex;
+}
+
+/* ヘッダー */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-primary);
+  color: white;
+  padding: 20px 20px 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+
+.header-icon {
+  font-size: 32px;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   カード
+   ============================================================ */
+.card {
+  background: var(--color-card);
+  margin: 12px 16px 0;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--color-bg);
+}
+
+/* ============================================================
+   物件情報グリッド
+   ============================================================ */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ============================================================
+   AIスコア
+   ============================================================ */
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.score-circle {
+  flex-shrink: 0;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: 4px solid var(--color-border);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.score-circle.excellent {
+  border-color: var(--color-approve);
+  background: #e6f4ea;
+}
+
+.score-circle.good {
+  border-color: var(--color-warning);
+  background: #fef7e0;
+}
+
+.score-circle.poor {
+  border-color: var(--color-reject);
+  background: #fce8e6;
+}
+
+.score-number {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.score-unit {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.score-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.score-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  width: fit-content;
+}
+
+.score-badge.excellent {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.score-badge.good {
+  background: #fef7e0;
+  color: #b45309;
+}
+
+.score-badge.poor {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.score-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: var(--color-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-bar {
+  height: 100%;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.6s ease, background-color 0.3s;
+  background: var(--color-primary);
+}
+
+.score-summary {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.issues-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.issues-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-reject);
+  margin-bottom: 8px;
+}
+
+.issues-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issues-list li {
+  font-size: 13px;
+  color: var(--color-text);
+  padding: 8px 12px;
+  background: #fce8e6;
+  border-radius: 6px;
+  border-left: 3px solid var(--color-reject);
+}
+
+/* ============================================================
+   写真ギャラリー
+   ============================================================ */
+.photos-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+  min-height: 80px;
+}
+
+.photos-loading {
+  grid-column: span 2;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+.photo-item {
+  aspect-ratio: 4/3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.photo-item:active img {
+  transform: scale(0.97);
+}
+
+.photo-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 10px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.no-photos {
+  grid-column: span 2;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  padding: 16px 0;
+}
+
+.drive-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.drive-btn:active {
+  background: var(--color-border);
+}
+
+/* ============================================================
+   コメント
+   ============================================================ */
+.comment-input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  resize: none;
+  transition: border-color 0.2s;
+  background: var(--color-bg);
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: white;
+}
+
+.char-count {
+  text-align: right;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   アクションボタン
+   ============================================================ */
+.action-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 4px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: var(--shadow);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-approve {
+  background: var(--color-approve);
+  color: white;
+}
+
+.btn-approve:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-reject {
+  background: var(--color-reject);
+  color: white;
+}
+
+.btn-reject:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-secondary {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ============================================================
+   モーダル
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  width: 100%;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.modal-content p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.modal-actions .btn {
+  padding: 14px;
+}
+
+.bottom-space {
+  height: 20px;
+}

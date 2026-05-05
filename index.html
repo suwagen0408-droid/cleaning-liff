@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>清掃確認 - 管理者承認</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ローディング画面 -->
+  <div id="loading-screen" class="screen active">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>読み込み中...</p>
+    </div>
+  </div>
+
+  <!-- エラー画面 -->
+  <div id="error-screen" class="screen">
+    <div class="error-content">
+      <div class="error-icon">⚠️</div>
+      <h2>エラーが発生しました</h2>
+      <p id="error-message">データを取得できませんでした。</p>
+      <button class="btn btn-secondary" onclick="location.reload()">再試行</button>
+    </div>
+  </div>
+
+  <!-- 完了画面 -->
+  <div id="done-screen" class="screen">
+    <div class="done-content">
+      <div class="done-icon" id="done-icon">✅</div>
+      <h2 id="done-title">処理が完了しました</h2>
+      <p id="done-message"></p>
+      <button class="btn btn-secondary" onclick="liff.closeWindow()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- メイン画面 -->
+  <div id="main-screen" class="screen">
+
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div class="header-icon">🧹</div>
+      <div>
+        <h1>清掃完了確認</h1>
+        <p class="header-subtitle">管理者承認フォーム</p>
+      </div>
+    </header>
+
+    <!-- 物件情報カード -->
+    <section class="card info-card">
+      <h2 class="card-title">📋 清掃情報</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">物件名</span>
+          <span class="info-value" id="property-name">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">部屋番号</span>
+          <span class="info-value" id="room-number">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">担当清掃員</span>
+          <span class="info-value" id="cleaner-name">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">完了時刻</span>
+          <span class="info-value" id="timestamp">-</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- AIスコアカード -->
+    <section class="card score-card">
+      <h2 class="card-title">🤖 AI判定結果</h2>
+      <div class="score-display">
+        <div class="score-circle" id="score-circle">
+          <span class="score-number" id="score-number">-</span>
+          <span class="score-unit">点</span>
+        </div>
+        <div class="score-info">
+          <div class="score-badge" id="score-badge">判定中</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar" id="score-bar"></div>
+          </div>
+          <p class="score-summary" id="score-summary">AI解析中...</p>
+        </div>
+      </div>
+      <div id="issues-section" class="issues-section" style="display:none;">
+        <h3 class="issues-title">⚠️ 指摘事項</h3>
+        <ul id="issues-list" class="issues-list"></ul>
+      </div>
+    </section>
+
+    <!-- 写真ギャラリー -->
+    <section class="card photos-card">
+      <h2 class="card-title">📸 清掃写真</h2>
+      <div id="photos-gallery" class="photos-gallery">
+        <div class="photos-loading">写真を読み込み中...</div>
+      </div>
+      <a id="drive-link" href="#" target="_blank" class="drive-btn">
+        📁 Driveフォルダを開く
+      </a>
+    </section>
+
+    <!-- コメント入力 -->
+    <section class="card comment-card">
+      <h2 class="card-title">💬 コメント（任意）</h2>
+      <textarea
+        id="manager-comment"
+        class="comment-input"
+        placeholder="差し戻し理由や補足事項を入力（差し戻し時は清掃員に通知されます）"
+        rows="3"
+        maxlength="200"
+      ></textarea>
+      <div class="char-count"><span id="char-count">0</span>/200</div>
+    </section>
+
+    <!-- 承認・差し戻しボタン -->
+    <section class="action-section">
+      <button id="approve-btn" class="btn btn-approve" onclick="confirmAction('approve')">
+        ✅ 承認する
+      </button>
+      <button id="reject-btn" class="btn btn-reject" onclick="confirmAction('reject')">
+        🔄 差し戻す
+      </button>
+    </section>
+
+    <div class="bottom-space"></div>
+  </div>
+
+  <!-- 確認モーダル -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <h3 id="modal-title">確認</h3>
+      <p id="modal-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+        <button class="btn" id="modal-confirm-btn" onclick="executeAction()">実行する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
