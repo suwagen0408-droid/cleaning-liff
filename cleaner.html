@@ -453,6 +453,11 @@ async function submitReport() {
   var cleaner = document.getElementById('cleaner-name').value.trim();
   var list    = Object.values(photos);
 
+  if (!prop || !room || !cleaner) {
+    alert('物件・部屋番号・担当者名を選択してください。');
+    return;
+  }
+
   var overlay = document.getElementById('loading-overlay');
   overlay.style.display = 'flex';
   document.getElementById('loading-count').textContent = list.length + '枚';
