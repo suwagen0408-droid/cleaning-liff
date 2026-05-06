@@ -133,29 +133,24 @@
     }
 
     .amenity-row {
-      display: flex; align-items: center;
-      justify-content: space-between; padding: 6px 0;
-      border-bottom: 1px solid var(--bg);
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 0; border-bottom: 1px solid var(--bg);
     }
     .amenity-row:last-child { border-bottom: none; }
-    .amenity-name { font-size: 14px; font-weight: 600; color: var(--text); }
-    .stepper {
-      display: flex; align-items: center;
-      border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden;
+    .amenity-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .amenity-lbl {
+      font-size: 11px; font-weight: 700;
+      width: 54px; text-align: right; transition: color 0.15s;
     }
-    .stepper-btn {
-      width: 44px; height: 44px; border: none; background: var(--bg);
-      font-size: 22px; font-weight: 700; cursor: pointer;
-      color: var(--blue); display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent;
+    .level-dots { display: flex; gap: 5px; }
+    .ldot {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 2px solid #ccc; background: #f0f2f5;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s, background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
     }
-    .stepper-btn:active { background: #d2e3fc; }
-    .stepper-val {
-      min-width: 44px; text-align: center; font-size: 17px; font-weight: 700;
-      border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
-      height: 44px; line-height: 44px; color: var(--text);
-    }
-    .stepper-val.warn { color: var(--red); }
+    .ldot:active { transform: scale(0.85); }
 
     #loading-overlay {
       display: none; position: fixed; inset: 0;
@@ -249,16 +244,19 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa
 var PROPERTIES = {};
 
 var AMENITY_ITEMS = [
-  { key: 'sheets',       label: 'シーツ',         warn: 2 },
-  { key: 'duvet_cover',  label: '掛け布団カバー',  warn: 2 },
-  { key: 'pillow_cover', label: '枕カバー',        warn: 2 },
-  { key: 'bath_towel',   label: 'バスタオル',      warn: 2 },
-  { key: 'towel',        label: 'タオル',          warn: 2 },
-  { key: 'toothbrush',   label: '歯ブラシ',        warn: 3 },
+  { key: 'sheets',       label: 'シーツ' },
+  { key: 'duvet_cover',  label: '掛け布団カバー' },
+  { key: 'pillow_cover', label: '枕カバー' },
+  { key: 'bath_towel',   label: 'バスタオル' },
+  { key: 'towel',        label: 'タオル' },
+  { key: 'toothbrush',   label: '歯ブラシ' },
 ];
 
+var LEVEL_LABELS = ['', 'ほぼなし', '少ない', '半分', '十分', 'たっぷり'];
+var LEVEL_COLORS = ['', '#ea4335', '#f57c00', '#f9ab00', '#7cb342', '#34a853'];
+
 var amenities = {};
-AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 0; });
+AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 5; });
 
 var PHOTO_SECTIONS = [
   {
@@ -390,24 +388,42 @@ window.onload = function() {
 function buildAmenitySection() {
   var grid = document.getElementById('amenity-grid');
   grid.innerHTML = AMENITY_ITEMS.map(function(item) {
+    var dots = [1, 2, 3, 4, 5].map(function(lv) {
+      return '<div class="ldot" id="ld-' + item.key + '-' + lv + '"' +
+        ' onclick="setLevel(\'' + item.key + '\',' + lv + ')"></div>';
+    }).join('');
     return '<div class="amenity-row">' +
       '<span class="amenity-name">' + item.label + '</span>' +
-      '<div class="stepper">' +
-        '<button type="button" class="stepper-btn" onclick="stepAmenity(\'' + item.key + '\', -1)">−</button>' +
-        '<span class="stepper-val" id="am-' + item.key + '">0</span>' +
-        '<button type="button" class="stepper-btn" onclick="stepAmenity(\'' + item.key + '\', 1)">＋</button>' +
-      '</div>' +
+      '<span class="amenity-lbl" id="lbl-' + item.key + '"></span>' +
+      '<div class="level-dots">' + dots + '</div>' +
     '</div>';
   }).join('');
+  AMENITY_ITEMS.forEach(function(item) { renderLevel(item.key, amenities[item.key]); });
 }
 
-function stepAmenity(key, delta) {
-  amenities[key] = Math.max(0, Math.min(99, amenities[key] + delta));
-  var el = document.getElementById('am-' + key);
-  if (!el) return;
-  el.textContent = amenities[key];
-  var item = AMENITY_ITEMS.find(function(i) { return i.key === key; });
-  el.className = 'stepper-val' + (item && amenities[key] <= item.warn ? ' warn' : '');
+function setLevel(key, lv) {
+  amenities[key] = lv;
+  renderLevel(key, lv);
+}
+
+function renderLevel(key, lv) {
+  var color = LEVEL_COLORS[lv] || '#ccc';
+  for (var i = 1; i <= 5; i++) {
+    var dot = document.getElementById('ld-' + key + '-' + i);
+    if (!dot) continue;
+    if (i <= lv) {
+      dot.style.background   = color;
+      dot.style.borderColor  = color;
+    } else {
+      dot.style.background   = '#f0f2f5';
+      dot.style.borderColor  = '#ccc';
+    }
+  }
+  var lbl = document.getElementById('lbl-' + key);
+  if (lbl) {
+    lbl.textContent = LEVEL_LABELS[lv] || '';
+    lbl.style.color = color;
+  }
 }
 
 function buildPhotoSections() {
@@ -568,7 +584,7 @@ async function submitReport() {
 
 function resetForm() {
   photos = {};
-  AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 0; });
+  AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 5; });
   document.getElementById('property-name').value = '';
   onPropertyChange();
   document.getElementById('cleaner-name').value = '';
