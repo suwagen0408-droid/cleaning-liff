@@ -132,6 +132,31 @@
       background: white; cursor: pointer; color: var(--text); margin-top: 8px;
     }
 
+    .amenity-row {
+      display: flex; align-items: center;
+      justify-content: space-between; padding: 6px 0;
+      border-bottom: 1px solid var(--bg);
+    }
+    .amenity-row:last-child { border-bottom: none; }
+    .amenity-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .stepper {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .stepper-btn {
+      width: 44px; height: 44px; border: none; background: var(--bg);
+      font-size: 22px; font-weight: 700; cursor: pointer;
+      color: var(--blue); display: flex; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .stepper-btn:active { background: #d2e3fc; }
+    .stepper-val {
+      min-width: 44px; text-align: center; font-size: 17px; font-weight: 700;
+      border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
+      height: 44px; line-height: 44px; color: var(--text);
+    }
+    .stepper-val.warn { color: var(--red); }
+
     #loading-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(255,255,255,0.93);
@@ -188,6 +213,12 @@
     <!-- 写真セクション（JS生成） -->
     <div id="photo-sections"></div>
 
+    <!-- アメニティ残量 -->
+    <div class="card">
+      <div class="card-title">🧺 アメニティ残量</div>
+      <div id="amenity-grid"></div>
+    </div>
+
   </div>
 
   <div class="submit-area">
@@ -216,6 +247,18 @@
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
 
 var PROPERTIES = {};
+
+var AMENITY_ITEMS = [
+  { key: 'sheets',       label: 'シーツ',         warn: 2 },
+  { key: 'duvet_cover',  label: '掛け布団カバー',  warn: 2 },
+  { key: 'pillow_cover', label: '枕カバー',        warn: 2 },
+  { key: 'bath_towel',   label: 'バスタオル',      warn: 2 },
+  { key: 'towel',        label: 'タオル',          warn: 2 },
+  { key: 'toothbrush',   label: '歯ブラシ',        warn: 3 },
+];
+
+var amenities = {};
+AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 0; });
 
 var PHOTO_SECTIONS = [
   {
@@ -340,8 +383,32 @@ window.onload = function() {
     });
 
   buildPhotoSections();
+  buildAmenitySection();
   updateUI();
 };
+
+function buildAmenitySection() {
+  var grid = document.getElementById('amenity-grid');
+  grid.innerHTML = AMENITY_ITEMS.map(function(item) {
+    return '<div class="amenity-row">' +
+      '<span class="amenity-name">' + item.label + '</span>' +
+      '<div class="stepper">' +
+        '<button type="button" class="stepper-btn" onclick="stepAmenity(\'' + item.key + '\', -1)">−</button>' +
+        '<span class="stepper-val" id="am-' + item.key + '">0</span>' +
+        '<button type="button" class="stepper-btn" onclick="stepAmenity(\'' + item.key + '\', 1)">＋</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function stepAmenity(key, delta) {
+  amenities[key] = Math.max(0, Math.min(99, amenities[key] + delta));
+  var el = document.getElementById('am-' + key);
+  if (!el) return;
+  el.textContent = amenities[key];
+  var item = AMENITY_ITEMS.find(function(i) { return i.key === key; });
+  el.className = 'stepper-val' + (item && amenities[key] <= item.warn ? ' warn' : '');
+}
 
 function buildPhotoSections() {
   var container = document.getElementById('photo-sections');
@@ -481,6 +548,7 @@ async function submitReport() {
         cleaner_name:  cleaner,
         timestamp:     new Date().toLocaleString('ja-JP'),
         photos:        list,
+        amenities:     amenities,
       })
     });
     var text = await res.text();
@@ -500,10 +568,12 @@ async function submitReport() {
 
 function resetForm() {
   photos = {};
+  AMENITY_ITEMS.forEach(function(item) { amenities[item.key] = 0; });
   document.getElementById('property-name').value = '';
   onPropertyChange();
   document.getElementById('cleaner-name').value = '';
   buildPhotoSections();
+  buildAmenitySection();
   document.getElementById('main-screen').style.display = 'block';
   document.getElementById('done-screen').style.display = 'none';
   updateUI();
