@@ -311,7 +311,7 @@ window.onload = function() {
       sel.innerHTML = '<option value="">選択してください</option>';
       (data.properties || []).forEach(function(p) {
         PROPERTIES[p.property_name] = String(p.rooms || '')
-          .split(',').map(function(r) { return r.trim(); }).filter(Boolean);
+          .split(/[,\/、]/).map(function(r) { return r.trim(); }).filter(Boolean);
         var o = document.createElement('option');
         o.value = p.property_name; o.textContent = p.property_name;
         sel.appendChild(o);
