@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>清掃開始記録</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #1a73e8;
+      --green: #34a853;
+      --yellow: #f9ab00;
+      --red: #ea4335;
+      --orange: #e67e22;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --border: #e0e0e0;
+      --text: #202124;
+      --sub: #5f6368;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      background: var(--orange);
+      color: white;
+      padding: 14px 16px;
+      padding-top: calc(14px + env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header p  { font-size: 11px; opacity: 0.85; }
+
+    .progress-wrap {
+      position: sticky;
+      top: 56px;
+      z-index: 19;
+      background: var(--bg);
+      padding: 6px 12px 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width 0.3s; }
+    .progress-label { font-size: 11px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+
+    .content { padding: 10px 12px 130px; display: flex; flex-direction: column; gap: 10px; }
+
+    .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card-title {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--bg);
+    }
+
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--sub); margin-bottom: 6px; margin-top: 14px;
+    }
+    label:first-of-type { margin-top: 0; }
+    .req { color: var(--red); font-size: 10px; margin-left: 3px; }
+
+    select {
+      width: 100%; padding: 12px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 15px; font-family: inherit;
+      background: var(--bg); color: var(--text);
+      appearance: none; -webkit-appearance: none;
+    }
+    select:focus { outline: none; border-color: var(--orange); background: white; }
+
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .photo-item { display: flex; flex-direction: column; gap: 4px; }
+    .photo-label-text { font-size: 11px; font-weight: 600; color: var(--sub); line-height: 1.3; min-height: 28px; }
+
+    .photo-btn {
+      aspect-ratio: 4/3; border: 2px dashed var(--border); border-radius: 8px;
+      background: var(--bg); display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; overflow: hidden; position: relative;
+    }
+    .photo-btn.taken { border: 2px solid var(--orange); }
+    .photo-btn img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-btn .icon { font-size: 20px; }
+    .photo-btn .hint { font-size: 10px; color: var(--sub); margin-top: 2px; }
+    .photo-btn input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .check-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--bg);
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-label { font-size: 14px; font-weight: 600; flex: 1; }
+    .check-status {
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 12px; background: var(--bg); color: var(--sub);
+      white-space: nowrap;
+    }
+    .check-status.ok { background: #e6f4ea; color: var(--green); }
+    .check-btn-wrap { position: relative; overflow: hidden; }
+    .check-photo-btn {
+      padding: 8px 14px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      background: var(--bg); color: var(--text); cursor: pointer;
+      white-space: nowrap;
+    }
+    .check-photo-btn.taken { background: #fff3e0; border-color: var(--orange); color: var(--orange); }
+    .check-btn-wrap input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .submit-area {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: white; padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+    }
+    .submit-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+      background: var(--orange); color: white;
+    }
+    .submit-btn:disabled { background: var(--border); color: var(--sub); cursor: not-allowed; }
+    .submit-btn:not(:disabled):active { transform: scale(0.98); }
+
+    #done-screen {
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh;
+      padding: 24px; text-align: center; gap: 16px;
+    }
+    #done-screen .done-icon { font-size: 72px; }
+    #done-screen h2 { font-size: 24px; font-weight: 700; }
+    #done-screen p { color: var(--sub); font-size: 14px; line-height: 1.6; }
+    .retry-btn {
+      padding: 14px 32px; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 14px; font-family: inherit;
+      background: white; cursor: pointer; color: var(--text); margin-top: 8px;
+    }
+
+    #loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.93);
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; z-index: 100;
+    }
+    .spinner {
+      width: 48px; height: 48px; border: 4px solid var(--border);
+      border-top-color: var(--orange); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-count { font-size: 22px; font-weight: 700; color: var(--orange); }
+    #loading-msg { color: var(--sub); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div id="main-screen">
+  <header>
+    <div style="font-size:28px">📋</div>
+    <div>
+      <h1>清掃開始記録</h1>
+      <p>入室時の状態を記録してください</p>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0/7枚・確認0/2</div>
+  </div>
+
+  <div class="content">
+
+    <!-- 基本情報 -->
+    <div class="card">
+      <div class="card-title">📋 基本情報</div>
+      <label>物件名<span class="req">必須</span></label>
+      <select id="property-name" onchange="onPropertyChange()">
+        <option value="">選択してください</option>
+      </select>
+      <label>部屋番号<span class="req">必須</span></label>
+      <select id="room-number" disabled>
+        <option value="">物件を先に選択</option>
+      </select>
+      <label>担当者名<span class="req">必須</span></label>
+      <select id="cleaner-name">
+        <option value="">読み込み中...</option>
+      </select>
+    </div>
+
+    <!-- 入室時写真 -->
+    <div class="card">
+      <div class="card-title">📸 入室時写真</div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+
+    <!-- 動作確認 -->
+    <div class="card">
+      <div class="card-title">✅ 設備動作確認</div>
+      <div id="check-grid"></div>
+    </div>
+
+  </div>
+
+  <div class="submit-area">
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitReport()">
+      基本情報を入力してください
+    </button>
+  </div>
+</div>
+
+<!-- 完了画面 -->
+<div id="done-screen">
+  <div class="done-icon">📋</div>
+  <h2>記録完了！</h2>
+  <p>清掃開始記録を送信しました。<br>清掃を進めてください。</p>
+  <button class="retry-btn" onclick="resetForm()">続けて別の部屋を記録</button>
+</div>
+
+<!-- ローディング -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-count"></div>
+  <p id="loading-msg">送信中... しばらくお待ちください</p>
+</div>
+
+<script>
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
+
+var PROPERTIES = {};
+
+var ROOM_PHOTOS = [
+  { key: 'entrance',  label: '玄関' },
+  { key: 'kitchen',   label: '台所' },
+  { key: 'washroom',  label: '洗面台' },
+  { key: 'bathroom',  label: '浴室' },
+  { key: 'bedroom',   label: '寝室' },
+  { key: 'toilet',    label: 'トイレ' },
+  { key: 'desk',      label: '机の上' },
+];
+
+var CHECK_ITEMS = [
+  { key: 'aircon', label: 'エアコン稼働確認' },
+  { key: 'tv',     label: 'テレビ稼働確認' },
+];
+
+var photos = {};
+var checks = {};
+CHECK_ITEMS.forEach(function(c) { checks[c.key] = null; });
+
+window.onload = function() {
+  fetch(GAS_URL + '?action=properties')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var sel = document.getElementById('property-name');
+      sel.innerHTML = '<option value="">選択してください</option>';
+      (data.properties || []).forEach(function(p) {
+        PROPERTIES[p.property_name] = String(p.rooms || '')
+          .split(/[,\/、]/).map(function(r) { return r.trim(); }).filter(Boolean);
+        var o = document.createElement('option');
+        o.value = p.property_name; o.textContent = p.property_name;
+        sel.appendChild(o);
+      });
+    })
+    .catch(function() {
+      document.getElementById('property-name').innerHTML =
+        '<option value="">取得失敗 - 再読み込みしてください</option>';
+    });
+
+  fetch(GAS_URL + '?action=cleaners')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var cs = document.getElementById('cleaner-name');
+      cs.innerHTML = '<option value="">選択してください</option>';
+      (data.cleaners || []).forEach(function(name) {
+        var o = document.createElement('option');
+        o.value = name; o.textContent = name;
+        cs.appendChild(o);
+      });
+    })
+    .catch(function() {
+      document.getElementById('cleaner-name').innerHTML =
+        '<option value="">取得失敗 - 再読み込みしてください</option>';
+    });
+
+  buildPhotoGrid();
+  buildCheckGrid();
+  updateUI();
+};
+
+function buildPhotoGrid() {
+  var grid = document.getElementById('photo-grid');
+  grid.innerHTML = ROOM_PHOTOS.map(function(p) {
+    return '<div class="photo-item">' +
+      '<div class="photo-label-text">' + p.label + '</div>' +
+      '<div class="photo-btn" id="btn-' + p.key + '">' +
+        '<div class="icon">📷</div>' +
+        '<div class="hint">タップ</div>' +
+        '<input type="file" accept="image/*" capture="environment"' +
+        ' onchange="onPhotoSelect(this,\'' + p.key + '\',\'' + escJs(p.label) + '\')" />' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function buildCheckGrid() {
+  var grid = document.getElementById('check-grid');
+  grid.innerHTML = CHECK_ITEMS.map(function(c) {
+    return '<div class="check-item">' +
+      '<span class="check-label">' + c.label + '</span>' +
+      '<span class="check-status" id="chkst-' + c.key + '">未確認</span>' +
+      '<div class="check-btn-wrap">' +
+        '<button type="button" class="check-photo-btn" id="chkbtn-' + c.key + '">📷 撮影</button>' +
+        '<input type="file" accept="image/*" capture="environment"' +
+        ' onchange="onCheckPhoto(this,\'' + c.key + '\',\'' + escJs(c.label) + '\')" />' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function onPropertyChange() {
+  var prop = document.getElementById('property-name').value;
+  var rs   = document.getElementById('room-number');
+  rs.innerHTML = '';
+  if (!prop) {
+    rs.innerHTML = '<option value="">物件を先に選択</option>';
+    rs.disabled = true;
+  } else {
+    (PROPERTIES[prop] || []).forEach(function(r) {
+      var o = document.createElement('option');
+      o.value = r; o.textContent = r + '号室';
+      rs.appendChild(o);
+    });
+    rs.disabled = false;
+  }
+  updateUI();
+}
+
+function onPhotoSelect(input, key, label) {
+  var file = input.files[0];
+  if (!file) return;
+  resizeImage(file, 800, function(dataUrl) {
+    photos[key] = { label: label, dataUrl: dataUrl };
+    var btn = document.getElementById('btn-' + key);
+    btn.classList.add('taken');
+    btn.innerHTML = '<img src="' + dataUrl + '" alt="' + escHtml(label) + '">' +
+      '<input type="file" accept="image/*" capture="environment"' +
+      ' onchange="onPhotoSelect(this,\'' + key + '\',\'' + escJs(label) + '\')" />';
+    updateUI();
+  });
+}
+
+function onCheckPhoto(input, key, label) {
+  var file = input.files[0];
+  if (!file) return;
+  resizeImage(file, 800, function(dataUrl) {
+    checks[key] = { label: label, dataUrl: dataUrl };
+    var st  = document.getElementById('chkst-' + key);
+    var btn = document.getElementById('chkbtn-' + key);
+    if (st)  { st.textContent = '✅ 確認済'; st.className = 'check-status ok'; }
+    if (btn) { btn.textContent = '✅ 撮影済'; btn.className = 'check-photo-btn taken'; }
+    updateUI();
+  });
+}
+
+function resizeImage(file, maxPx, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var ratio  = Math.min(maxPx / img.width, maxPx / img.height, 1);
+      var canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      callback(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateUI() {
+  var prop    = document.getElementById('property-name').value;
+  var room    = document.getElementById('room-number').value;
+  var cleaner = document.getElementById('cleaner-name').value.trim();
+
+  var photoCount = Object.keys(photos).length;
+  var checkCount = Object.keys(checks).filter(function(k) { return checks[k]; }).length;
+  document.getElementById('progress-label').textContent =
+    photoCount + '/' + ROOM_PHOTOS.length + '枚・確認' + checkCount + '/' + CHECK_ITEMS.length;
+
+  var total = ROOM_PHOTOS.length + CHECK_ITEMS.length;
+  var done  = photoCount + checkCount;
+  document.getElementById('progress-fill').style.width = Math.round((done / total) * 100) + '%';
+
+  var btn   = document.getElementById('submit-btn');
+  var ready = prop && room && cleaner;
+  btn.disabled = !ready;
+  if (!ready) {
+    btn.textContent      = '基本情報を入力してください';
+    btn.style.background = '';
+  } else if (done === 0) {
+    btn.textContent      = '⚠️ 写真なしで記録する';
+    btn.style.background = '#f9ab00';
+  } else {
+    btn.textContent      = '📋 ' + done + '件の記録を送信する';
+    btn.style.background = 'var(--orange)';
+  }
+}
+
+document.addEventListener('change', function(e) {
+  var t = e.target;
+  if (t.id === 'cleaner-name' || t.id === 'room-number') updateUI();
+});
+
+async function submitReport() {
+  var prop    = document.getElementById('property-name').value;
+  var room    = document.getElementById('room-number').value;
+  var cleaner = document.getElementById('cleaner-name').value.trim();
+
+  if (!prop || !room || !cleaner) {
+    alert('物件・部屋番号・担当者名を選択してください。');
+    return;
+  }
+
+  var allPhotos = Object.values(photos).concat(
+    Object.values(checks).filter(Boolean)
+  );
+
+  var overlay = document.getElementById('loading-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('loading-count').textContent = allPhotos.length + '件';
+  document.getElementById('loading-msg').textContent   = '送信中... しばらくお待ちください';
+
+  try {
+    var res  = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action:        'cleaning_start',
+        property_name: prop,
+        room_number:   room,
+        cleaner_name:  cleaner,
+        timestamp:     new Date().toLocaleString('ja-JP'),
+        photos:        allPhotos,
+      })
+    });
+    var data = JSON.parse(await res.text());
+    overlay.style.display = 'none';
+    if (data.success) {
+      document.getElementById('main-screen').style.display = 'none';
+      document.getElementById('done-screen').style.display = 'flex';
+    } else {
+      alert('送信エラー: ' + (data.error || '不明なエラー'));
+    }
+  } catch(err) {
+    overlay.style.display = 'none';
+    alert('送信に失敗しました。電波状況を確認して再試行してください。\n' + err.message);
+  }
+}
+
+function resetForm() {
+  photos = {};
+  CHECK_ITEMS.forEach(function(c) { checks[c.key] = null; });
+  document.getElementById('property-name').value = '';
+  onPropertyChange();
+  document.getElementById('cleaner-name').value = '';
+  buildPhotoGrid();
+  buildCheckGrid();
+  document.getElementById('main-screen').style.display = 'block';
+  document.getElementById('done-screen').style.display = 'none';
+  updateUI();
+}
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c];
+  });
+}
+function escJs(s) {
+  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+</script>
+</body>
+</html>
