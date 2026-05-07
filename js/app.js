@@ -185,7 +185,7 @@ function closeModal() {
 async function executeAction() {
   var action = state.pendingAction;
   closeModal();
-  setButtonsLoading(true);
+  disableActions('処理中...');
 
   var comment = document.getElementById('manager-comment').value.trim();
 
@@ -211,11 +211,9 @@ async function executeAction() {
           : '清掃員へ再清掃依頼を送信しました。'
       );
     } else {
-      setButtonsLoading(false);
       showError('処理に失敗しました。\n' + (data.error || '不明なエラー'));
     }
   } catch (err) {
-    setButtonsLoading(false);
     showError('送信に失敗しました。\n' + err.message);
   }
 }
