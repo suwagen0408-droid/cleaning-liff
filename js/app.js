@@ -147,8 +147,10 @@ function renderPhotos(photoUrlsRaw) {
     var retakeBtn = '<button class="retake-request-btn" onclick="event.stopPropagation();openRetakeModal(' + i + ',\'' + escapeHtml(label) + '\')">📸 撮り直し依頼</button>';
     return [
       '<div class="photo-item">',
-      '  <div onclick="window.open(\'' + escapeHtml(url) + '\', \'_blank\')" style="cursor:pointer">',
-      '    <img src="' + escapeHtml(url) + '" alt="' + label + '" loading="lazy" onerror="this.parentElement.parentElement.style.display=\'none\'">',
+      '  <div onclick="window.open(\'' + escapeHtml(url) + '\', \'_blank\')" style="cursor:pointer;min-height:80px;position:relative;">',
+      '    <img src="' + escapeHtml(url) + '" alt="' + label + '" loading="lazy"',
+      '      onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">',
+      '    <div class="photo-error" style="display:none;">🖼️<br><span>' + label + '</span><br><small>タップして開く</small></div>',
       '    <div class="photo-label">' + label + '</div>',
       '  </div>',
       '  ' + retakeBtn,
