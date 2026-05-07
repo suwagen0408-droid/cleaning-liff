@@ -337,13 +337,33 @@ body {
 }
 
 .photo-item {
-  aspect-ratio: 4/3;
   border-radius: 8px;
   overflow: hidden;
   background: var(--color-bg);
-  cursor: pointer;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
+
+.photo-item > div:first-child {
+  aspect-ratio: 4/3;
+  position: relative;
+  overflow: hidden;
+}
+
+.retake-request-btn {
+  width: 100%;
+  padding: 6px 4px;
+  border: none;
+  background: #fff3e0;
+  color: #f57c00;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.retake-request-btn:active { background: #ffe0b2; }
 
 .photo-item img {
   width: 100%;

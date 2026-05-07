@@ -130,6 +130,19 @@
     <div class="bottom-space"></div>
   </div>
 
+  <!-- 撮り直し依頼モーダル -->
+  <div id="retake-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <h3>📸 撮り直し依頼</h3>
+      <p style="font-size:13px;color:#5f6368;margin-bottom:8px;">清掃員に撮り直してほしい内容を入力してください</p>
+      <textarea id="retake-note" rows="3" style="width:100%;padding:10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:inherit;resize:none;" placeholder="例：キッチンガスコンロが近すぎます。全体が映るように撮り直してください"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeRetakeModal()">キャンセル</button>
+        <button class="btn" style="background:#f57c00;" onclick="sendRetakeRequest()">依頼を送る</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 確認モーダル -->
   <div id="confirm-modal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
