@@ -142,12 +142,9 @@ function renderPhotos(photoUrlsRaw) {
   }
 
   var labels = ['清掃前', '清掃後', '玄関', 'リビング', 'キッチン', '浴室', 'トイレ', 'その他'];
-  var canRequest = (state.record && state.record.status === 'pending');
   gallery.innerHTML = urls.map(function (url, i) {
     var label = labels[i] || ('写真' + (i + 1));
-    var retakeBtn = canRequest
-      ? '<button class="retake-request-btn" onclick="event.stopPropagation();openRetakeModal(' + i + ',\'' + escapeHtml(label) + '\')">📸 撮り直し依頼</button>'
-      : '';
+    var retakeBtn = '<button class="retake-request-btn" onclick="event.stopPropagation();openRetakeModal(' + i + ',\'' + escapeHtml(label) + '\')">📸 撮り直し依頼</button>';
     return [
       '<div class="photo-item">',
       '  <div onclick="window.open(\'' + escapeHtml(url) + '\', \'_blank\')" style="cursor:pointer">',
