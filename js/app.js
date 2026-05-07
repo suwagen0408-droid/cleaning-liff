@@ -8,8 +8,6 @@ var state = {
   recordId: null,
   record: null,
   pendingAction: null,
-  retakePhotoIndex: null,
-  retakePhotoLabel: null,
 };
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -144,61 +142,13 @@ function renderPhotos(photoUrlsRaw) {
   var labels = ['清掃前', '清掃後', '玄関', 'リビング', 'キッチン', '浴室', 'トイレ', 'その他'];
   gallery.innerHTML = urls.map(function (url, i) {
     var label = labels[i] || ('写真' + (i + 1));
-    var retakeBtn = '<button class="retake-request-btn" onclick="event.stopPropagation();openRetakeModal(' + i + ',\'' + escapeHtml(label) + '\')">📸 撮り直し依頼</button>';
     return [
-      '<div class="photo-item">',
-      '  <div onclick="window.open(\'' + escapeHtml(url) + '\', \'_blank\')" style="cursor:pointer;min-height:80px;position:relative;">',
-      '    <img src="' + escapeHtml(url) + '" alt="' + label + '" loading="lazy"',
-      '      onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">',
-      '    <div class="photo-error" style="display:none;">🖼️<br><span>' + label + '</span><br><small>タップして開く</small></div>',
-      '    <div class="photo-label">' + label + '</div>',
-      '  </div>',
-      '  ' + retakeBtn,
+      '<div class="photo-item" onclick="window.open(\'' + escapeHtml(url) + '\', \'_blank\')">',
+      '  <img src="' + escapeHtml(url) + '" alt="' + label + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'">',
+      '  <div class="photo-label">' + label + '</div>',
       '</div>'
     ].join('');
   }).join('');
-}
-
-// ============================================================
-// 撮り直し依頼
-// ============================================================
-function openRetakeModal(photoIndex, photoLabel) {
-  state.retakePhotoIndex = photoIndex;
-  state.retakePhotoLabel = photoLabel;
-  document.getElementById('retake-note').value = '';
-  document.getElementById('retake-modal').style.display = 'flex';
-}
-
-function closeRetakeModal() {
-  document.getElementById('retake-modal').style.display = 'none';
-}
-
-async function sendRetakeRequest() {
-  var note = document.getElementById('retake-note').value.trim();
-  if (!note) {
-    document.getElementById('retake-note').focus();
-    return;
-  }
-  closeRetakeModal();
-
-  try {
-    var response = await fetch(GAS_API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action:    'request_retake',
-        record_id: state.recordId,
-        note:      '【' + (state.retakePhotoLabel || '写真') + '】' + note,
-      })
-    });
-    var data = JSON.parse(await response.text());
-    if (data.success) {
-      alert('✅ 撮り直し依頼を送信しました');
-    } else {
-      alert('送信失敗: ' + (data.error || '不明なエラー'));
-    }
-  } catch (err) {
-    alert('送信に失敗しました: ' + err.message);
-  }
 }
 
 // ============================================================

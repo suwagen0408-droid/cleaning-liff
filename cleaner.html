@@ -241,6 +241,12 @@
 <script>
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
 
+// 差し戻し再提出モード（URLに record_id が含まれる場合）
+var urlParams      = new URLSearchParams(window.location.search);
+var RESUBMIT_ID    = urlParams.get('record_id') || '';
+var RESUBMIT_PROP  = urlParams.get('property')  || '';
+var RESUBMIT_ROOM  = urlParams.get('room')      || '';
+
 var PROPERTIES = {};
 
 var AMENITY_ITEMS = [
@@ -344,6 +350,16 @@ var TOTAL_PHOTOS = PHOTO_SECTIONS.reduce(function(s, sec) { return s + sec.photo
 var photos = {};
 
 window.onload = function() {
+  // 差し戻し再提出モードのバナー表示
+  if (RESUBMIT_ID) {
+    var header = document.querySelector('header p');
+    if (header) {
+      header.textContent = '🔄 差し戻し再提出 — 写真を撮り直して再送してください';
+      header.style.color = '#ffcc80';
+    }
+    document.querySelector('header').style.background = '#c0392b';
+  }
+
   // 物件一覧をGASから取得
   fetch(GAS_URL + '?action=properties')
     .then(function(res) { return res.json(); })
@@ -357,6 +373,16 @@ window.onload = function() {
         o.value = p.property_name; o.textContent = p.property_name;
         sel.appendChild(o);
       });
+      // 差し戻しの場合は物件・部屋を自動選択
+      if (RESUBMIT_PROP) {
+        sel.value = RESUBMIT_PROP;
+        onPropertyChange();
+        if (RESUBMIT_ROOM) {
+          var rs = document.getElementById('room-number');
+          rs.value = RESUBMIT_ROOM;
+          updateUI();
+        }
+      }
     })
     .catch(function() {
       document.getElementById('property-name').innerHTML =
@@ -555,9 +581,20 @@ async function submitReport() {
   document.getElementById('loading-msg').textContent   = '送信中... しばらくお待ちください';
 
   try {
-    var res  = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({
+    var payload;
+    if (RESUBMIT_ID) {
+      payload = {
+        action:        'cleaning_resubmit',
+        record_id:     RESUBMIT_ID,
+        property_name: prop,
+        room_number:   room,
+        cleaner_name:  cleaner,
+        timestamp:     new Date().toLocaleString('ja-JP'),
+        photos:        list,
+        amenities:     amenities,
+      };
+    } else {
+      payload = {
         action:        'cleaning_complete',
         property_name: prop,
         room_number:   room,
@@ -565,7 +602,11 @@ async function submitReport() {
         timestamp:     new Date().toLocaleString('ja-JP'),
         photos:        list,
         amenities:     amenities,
-      })
+      };
+    }
+    var res  = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
     });
     var text = await res.text();
     var data = JSON.parse(text);
