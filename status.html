@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清掃ステータス</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0f2f5;
+      --card:     #ffffff;
+      --text:     #202124;
+      --sub:      #5f6368;
+      --border:   #e0e0e0;
+      --radius:   10px;
+      --shadow:   0 2px 8px rgba(0,0,0,0.08);
+
+      --c-done:     #34a853;
+      --c-progress: #f59e0b;
+      --c-assigned: #94a3b8;
+      --c-none:     #e2e8f0;
+      --c-approved: #1e7e34;
+      --c-rejected: #ea4335;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: #202124;
+      color: white;
+      padding: 14px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-title { font-size: 16px; font-weight: 700; }
+    .header-date  { font-size: 12px; opacity: 0.6; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .refresh-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .refresh-btn:hover { background: rgba(255,255,255,0.25); }
+    .countdown { font-size: 11px; opacity: 0.5; min-width: 36px; text-align: right; }
+
+    /* ---- Summary bar ---- */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 14px 16px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .stat-num  { font-size: 22px; font-weight: 800; line-height: 1; }
+    .stat-label{ font-size: 10px; color: var(--sub); font-weight: 600; }
+    .stat-num.approved  { color: var(--c-approved); }
+    .stat-num.done      { color: var(--c-done); }
+    .stat-num.progress  { color: var(--c-progress); }
+    .stat-num.none      { color: #94a3b8; }
+
+    /* ---- Progress bar ---- */
+    .progress-wrap {
+      height: 5px;
+      background: var(--c-none);
+      display: flex;
+      overflow: hidden;
+    }
+    .progress-seg { height: 100%; transition: width 0.5s ease; }
+    .seg-approved { background: var(--c-approved); }
+    .seg-done     { background: var(--c-done); }
+    .seg-progress { background: var(--c-progress); }
+    .seg-rejected { background: var(--c-rejected); }
+
+    /* ---- Content ---- */
+    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ---- Property card ---- */
+    .prop-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .prop-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .prop-name  { font-size: 14px; font-weight: 700; flex: 1; }
+    .prop-stats { font-size: 11px; color: var(--sub); display: flex; gap: 8px; }
+    .prop-rooms { padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* ---- Room chip ---- */
+    .room {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-width: 70px;
+      gap: 4px;
+      cursor: default;
+      border: 2px solid transparent;
+      transition: transform 0.1s;
+    }
+    .room:active { transform: scale(0.96); }
+    .room.clickable { cursor: pointer; }
+    .room-number { font-size: 15px; font-weight: 800; }
+    .room-status { font-size: 9px; font-weight: 700; letter-spacing: 0.03em; }
+    .room-cleaner{ font-size: 10px; color: rgba(0,0,0,0.5); max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Status colours */
+    .room.approved  { background: #e6f4ea; border-color: var(--c-approved); }
+    .room.approved .room-number { color: var(--c-approved); }
+    .room.approved .room-status { color: var(--c-approved); }
+
+    .room.done_pending { background: #e8f0fe; border-color: #1a73e8; }
+    .room.done_pending .room-number { color: #1a73e8; }
+    .room.done_pending .room-status { color: #1a73e8; }
+
+    .room.rejected  { background: #fce8e6; border-color: var(--c-rejected); }
+    .room.rejected .room-number { color: var(--c-rejected); }
+    .room.rejected .room-status { color: var(--c-rejected); }
+
+    .room.in_progress { background: #fef3c7; border-color: var(--c-progress); }
+    .room.in_progress .room-number { color: #92400e; }
+    .room.in_progress .room-status { color: #92400e; }
+
+    .room.assigned  { background: #f8fafc; border-color: #cbd5e1; }
+    .room.assigned .room-number { color: #64748b; }
+    .room.assigned .room-status { color: #94a3b8; }
+
+    .room.unassigned { background: #f1f5f9; border-color: #e2e8f0; }
+    .room.unassigned .room-number { color: #94a3b8; }
+    .room.unassigned .room-status { color: #cbd5e1; }
+
+    /* ---- Legend ---- */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 16px;
+      background: white;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--sub); }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .ld-approved  { background: var(--c-approved); }
+    .ld-done      { background: #1a73e8; }
+    .ld-rejected  { background: var(--c-rejected); }
+    .ld-progress  { background: var(--c-progress); }
+    .ld-assigned  { background: #94a3b8; }
+    .ld-unassigned{ background: #e2e8f0; border: 1px solid #cbd5e1; }
+
+    /* ---- Loading / error ---- */
+    .center {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 60vh; gap: 12px; color: var(--sub);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 360px) {
+      .room { min-width: 60px; padding: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🧹 清掃ステータス</div>
+    <div class="header-date" id="hdr-date"></div>
+  </div>
+  <div class="header-right">
+    <span class="countdown" id="countdown"></span>
+    <button class="refresh-btn" onclick="reload()">↻ 更新</button>
+  </div>
+</div>
+
+<div class="summary" id="summary" style="display:none">
+  <div class="stat"><div class="stat-num approved" id="s-approved">-</div><div class="stat-label">承認済み</div></div>
+  <div class="stat"><div class="stat-num done"     id="s-done">-</div><div class="stat-label">清掃済み</div></div>
+  <div class="stat"><div class="stat-num progress" id="s-progress">-</div><div class="stat-label">清掃中</div></div>
+  <div class="stat"><div class="stat-num none"     id="s-none">-</div><div class="stat-label">未清掃</div></div>
+</div>
+
+<div class="progress-wrap" id="progress-wrap" style="display:none">
+  <div class="progress-seg seg-approved" id="pg-approved" style="width:0%"></div>
+  <div class="progress-seg seg-done"     id="pg-done"     style="width:0%"></div>
+  <div class="progress-seg seg-progress" id="pg-progress" style="width:0%"></div>
+  <div class="progress-seg seg-rejected" id="pg-rejected" style="width:0%"></div>
+</div>
+
+<div class="content" id="content">
+  <div class="center"><div class="spinner"></div><div>読み込み中...</div></div>
+</div>
+
+<div class="legend" id="legend" style="display:none">
+  <div class="legend-item"><div class="legend-dot ld-approved"></div>承認済み</div>
+  <div class="legend-item"><div class="legend-dot ld-done"></div>清掃済み（承認待ち）</div>
+  <div class="legend-item"><div class="legend-dot ld-rejected"></div>差し戻し</div>
+  <div class="legend-item"><div class="legend-dot ld-progress"></div>清掃中</div>
+  <div class="legend-item"><div class="legend-dot ld-assigned"></div>未清掃（担当あり）</div>
+  <div class="legend-item"><div class="legend-dot ld-unassigned"></div>未清掃（担当なし）</div>
+</div>
+
+<script>
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzIEfUMpaOVsMcKOwEQnIIrDa_oqx2Cbz0DmeUKiacrAfsTr_ScoImhbJb8kgIXA2ls2Q/exec';
+var LIFF_BASE = 'https://suwagen0408-droid.github.io/cleaning-liff';
+var REFRESH_SEC = 60;
+var timer, countdown;
+
+function e(s) {
+  return String(s || '').replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c];
+  });
+}
+
+function fmtDate(d) {
+  return d.getFullYear() + '年' +
+    (d.getMonth() + 1) + '月' +
+    d.getDate() + '日(' + ['日','月','火','水','木','金','土'][d.getDay()] + ')';
+}
+
+function statusLabel(s) {
+  return { done_approved:'承認済み', done_pending:'承認待ち', done_rejected:'差し戻し',
+           in_progress:'清掃中', assigned:'未清掃', unassigned:'未清掃' }[s] || s;
+}
+function statusIcon(s) {
+  return { done_approved:'✅', done_pending:'📋', done_rejected:'🔄',
+           in_progress:'🧹', assigned:'⬜', unassigned:'　' }[s] || '';
+}
+function statusClass(s) {
+  return { done_approved:'approved', done_pending:'done_pending', done_rejected:'rejected',
+           in_progress:'in_progress', assigned:'assigned', unassigned:'unassigned' }[s] || '';
+}
+
+function reload() {
+  clearInterval(timer);
+  clearInterval(countdown);
+  document.getElementById('content').innerHTML =
+    '<div class="center"><div class="spinner"></div><div>読み込み中...</div></div>';
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('legend').style.display = 'none';
+  loadStatus();
+}
+
+function startCountdown() {
+  var left = REFRESH_SEC;
+  var el = document.getElementById('countdown');
+  el.textContent = left + 's';
+  clearInterval(countdown);
+  countdown = setInterval(function() {
+    left--;
+    el.textContent = left + 's';
+    if (left <= 0) {
+      clearInterval(countdown);
+      reload();
+    }
+  }, 1000);
+}
+
+function loadStatus() {
+  document.getElementById('hdr-date').textContent = fmtDate(new Date());
+
+  fetch(GAS_URL + '?action=today_status')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.success) throw new Error(d.error || 'error');
+      render(d.rooms || []);
+      startCountdown();
+    })
+    .catch(function(err) {
+      document.getElementById('content').innerHTML =
+        '<div class="center"><div>⚠️ ' + e(err.message) + '</div><div style="font-size:12px;color:#999">しばらくしてから再試行してください</div></div>';
+    });
+}
+
+function render(rooms) {
+  // 集計
+  var counts = { done_approved:0, done_pending:0, done_rejected:0, in_progress:0, assigned:0, unassigned:0 };
+  rooms.forEach(function(r) { if (counts[r.status] !== undefined) counts[r.status]++; });
+  var total = rooms.length;
+
+  // Summary
+  document.getElementById('s-approved').textContent = counts.done_approved;
+  document.getElementById('s-done').textContent = counts.done_pending + counts.done_rejected;
+  document.getElementById('s-progress').textContent = counts.in_progress;
+  document.getElementById('s-none').textContent = counts.assigned + counts.unassigned;
+  document.getElementById('summary').style.display = '';
+
+  // Progress bar
+  function pct(n) { return total ? (n / total * 100).toFixed(1) + '%' : '0%'; }
+  document.getElementById('pg-approved').style.width = pct(counts.done_approved);
+  document.getElementById('pg-done').style.width     = pct(counts.done_pending);
+  document.getElementById('pg-rejected').style.width = pct(counts.done_rejected);
+  document.getElementById('pg-progress').style.width = pct(counts.in_progress);
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('legend').style.display = '';
+
+  // 物件ごとにグループ化
+  var propMap = {};
+  var propOrder = [];
+  rooms.forEach(function(r) {
+    if (!propMap[r.property]) { propMap[r.property] = []; propOrder.push(r.property); }
+    propMap[r.property].push(r);
+  });
+
+  if (propOrder.length === 0) {
+    document.getElementById('content').innerHTML =
+      '<div class="center"><div>物件が登録されていません</div></div>';
+    return;
+  }
+
+  var html = propOrder.map(function(prop) {
+    var propRooms = propMap[prop];
+    var doneCount = propRooms.filter(function(r) {
+      return r.status === 'done_approved' || r.status === 'done_pending' || r.status === 'done_rejected';
+    }).length;
+    var total2 = propRooms.length;
+
+    var roomsHtml = propRooms.map(function(r) {
+      var cls = statusClass(r.status);
+      var clickable = (r.status === 'done_pending' || r.status === 'done_approved' || r.status === 'done_rejected') && r.record_id;
+      var url = clickable ? (LIFF_BASE + '/index.html?record_id=' + encodeURIComponent(r.record_id)) : '';
+      var tag = clickable ? 'a href="' + url + '" target="_blank"' : 'div';
+      var closeTag = clickable ? 'a' : 'div';
+      return '<' + tag + ' class="room ' + cls + (clickable ? ' clickable' : '') + '">' +
+        '<div class="room-number">' + e(r.room) + '</div>' +
+        '<div class="room-status">' + statusIcon(r.status) + ' ' + statusLabel(r.status) + '</div>' +
+        '<div class="room-cleaner">' + e(r.cleaner || '-') + '</div>' +
+        '</' + closeTag + '>';
+    }).join('');
+
+    return '<div class="prop-card">' +
+      '<div class="prop-header">' +
+        '<div class="prop-name">' + e(prop) + '</div>' +
+        '<div class="prop-stats">' +
+          '<span>' + doneCount + '/' + total2 + '室完了</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prop-rooms">' + roomsHtml + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('content').innerHTML = html;
+}
+
+loadStatus();
+</script>
+</body>
+</html>
